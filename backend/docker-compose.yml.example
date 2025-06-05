@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  # For development only, because this DB
+  # exposes it's port to the public
+  dev-db:
+    env_file:
+      - .env
+    image: postgres:17
+    ports:
+      - "5437:5437"
+    environment:
+      - POSTGRES_DB=${DEV_DB_NAME}
+      - POSTGRES_USER=${DEV_DB_USERNAME}
+      - POSTGRES_PASSWORD=${DEV_DB_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    container_name: dev-db
+    command: -p 5437
+    shm_size: 10gb

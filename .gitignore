@@ -1,0 +1,3 @@
+postgresus_data/
+.env
+pgdata/

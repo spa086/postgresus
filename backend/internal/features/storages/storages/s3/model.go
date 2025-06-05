@@ -1,0 +1,175 @@
+package s3_storage
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+)
+
+type S3Storage struct {
+	StorageID   uuid.UUID `json:"storageId"   gorm:"primaryKey;type:uuid;column:storage_id"`
+	S3Bucket    string    `json:"s3Bucket"    gorm:"not null;type:text;column:s3_bucket"`
+	S3Region    string    `json:"s3Region"    gorm:"not null;type:text;column:s3_region"`
+	S3AccessKey string    `json:"s3AccessKey" gorm:"not null;type:text;column:s3_access_key"`
+	S3SecretKey string    `json:"s3SecretKey" gorm:"not null;type:text;column:s3_secret_key"`
+	S3Endpoint  string    `json:"s3Endpoint"  gorm:"type:text;column:s3_endpoint"`
+}
+
+func (s *S3Storage) TableName() string {
+	return "s3_storages"
+}
+
+func (s *S3Storage) SaveFile(fileID uuid.UUID, file io.Reader) error {
+	client, err := s.getClient()
+	if err != nil {
+		return err
+	}
+
+	// Read the entire file into memory
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Upload the file using MinIO client
+	_, err = client.PutObject(
+		context.TODO(),
+		s.S3Bucket,
+		fileID.String()+".zip",
+		bytes.NewReader(data),
+		int64(len(data)),
+		minio.PutObjectOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upload file to S3: %w", err)
+	}
+
+	return nil
+}
+
+func (s *S3Storage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
+	client, err := s.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the object using MinIO client
+	object, err := client.GetObject(
+		context.TODO(),
+		s.S3Bucket,
+		fileID.String()+".zip",
+		minio.GetObjectOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file from S3: %w", err)
+	}
+
+	return object, nil
+}
+
+func (s *S3Storage) DeleteFile(fileID uuid.UUID) error {
+	client, err := s.getClient()
+	if err != nil {
+		return err
+	}
+
+	// Delete the object using MinIO client
+	err = client.RemoveObject(
+		context.TODO(),
+		s.S3Bucket,
+		fileID.String()+".zip",
+		minio.RemoveObjectOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete file from S3: %w", err)
+	}
+
+	return nil
+}
+
+func (s *S3Storage) Validate() error {
+	if s.S3Bucket == "" {
+		return errors.New("S3 bucket is required")
+	}
+	if s.S3Region == "" {
+		return errors.New("S3 region is required")
+	}
+	if s.S3AccessKey == "" {
+		return errors.New("S3 access key is required")
+	}
+	if s.S3SecretKey == "" {
+		return errors.New("S3 secret key is required")
+	}
+
+	// Try to create a client to validate the configuration
+	_, err := s.getClient()
+	if err != nil {
+		return fmt.Errorf("invalid S3 configuration: %w", err)
+	}
+
+	return nil
+}
+
+func (s *S3Storage) TestConnection() error {
+	client, err := s.getClient()
+	if err != nil {
+		return err
+	}
+
+	// Create a context with 5 second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Check if the bucket exists to verify connection
+	exists, err := client.BucketExists(ctx, s.S3Bucket)
+	if err != nil {
+		// Check if the error is due to context deadline exceeded
+		if errors.Is(err, context.DeadlineExceeded) {
+			return errors.New("failed to connect to the bucket. Please check params")
+		}
+		return fmt.Errorf("failed to connect to S3: %w", err)
+	}
+
+	if !exists {
+		return fmt.Errorf("bucket '%s' does not exist", s.S3Bucket)
+	}
+
+	return nil
+}
+
+func (s *S3Storage) getClient() (*minio.Client, error) {
+	endpoint := s.S3Endpoint
+	useSSL := true
+
+	if strings.HasPrefix(endpoint, "http://") {
+		useSSL = false
+		endpoint = strings.TrimPrefix(endpoint, "http://")
+	} else if strings.HasPrefix(endpoint, "https://") {
+		endpoint = strings.TrimPrefix(endpoint, "https://")
+	}
+
+	// If no endpoint is provided, use the AWS S3 endpoint for the region
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("s3.%s.amazonaws.com", s.S3Region)
+	}
+
+	// Initialize the MinIO client
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(s.S3AccessKey, s.S3SecretKey, ""),
+		Secure: useSSL,
+		Region: s.S3Region,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize MinIO client: %w", err)
+	}
+
+	return minioClient, nil
+}

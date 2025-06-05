@@ -1,0 +1,12 @@
+main
+.env
+docker-compose.yml
+pgdata
+pgdata_test/
+main.exe
+swagger/
+swagger/*
+swagger/docs.go
+swagger/swagger.json
+swagger/swagger.yaml
+postgresus-backend.exe

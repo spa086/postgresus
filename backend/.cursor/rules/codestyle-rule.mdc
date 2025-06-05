@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Always place private methods to the bottom of file
+
+Code should look like:
+
+type SomeService struct {
+    func PublicMethod(...) ...
+
+    func privateMethod(...) ...
+}

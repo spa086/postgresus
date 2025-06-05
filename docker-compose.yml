@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  postgresus-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4006:4006"
+
+  postgresus-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4005:4005"
+    volumes:
+      - ./postgresus-data:/postgresus-data
+
+  postgresus-db:
+    env_file:
+      - .env
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    container_name: postgresus-db
+    command: -p 5437
+    shm_size: 10gb

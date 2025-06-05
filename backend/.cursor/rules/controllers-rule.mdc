@@ -1,0 +1,55 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. When we write controller:
+- we combine all routes to single controller
+- names them as .WhatWeDo (not "handlers") concept
+
+2. We use gin and *gin.Context for all routes.
+Example:
+
+func (c *TasksController) GetAvailableTasks(ctx *gin.Context) ...
+
+3. We document all routes with Swagger in the following format:
+
+// SignIn
+// @Summary Authenticate a user
+// @Description Authenticate a user with email and password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body SignInRequest true "User signin data"
+// @Success 200 {object} SignInResponse
+// @Failure 400
+// @Router /users/signin [post]
+
+Do not forget to write docs.
+You can avoid description if it is useless.
+Specify particular acceping \ producing models
+
+4. All controllers should have RegisterRoutes method which receives
+RouterGroup (always put this routes on the top of file under controller definition)
+
+Example:
+
+func (c *OrderController) RegisterRoutes(router *gin.RouterGroup) {
+	router.POST("/bots/users/orders/generate", c.GenerateOrder)
+	router.POST("/bots/users/orders/generate-by-admin", c.GenerateOrderByAdmin)
+	router.GET("/bots/users/orders/mark-as-paid-by-admin", c.MarkOrderAsPaidByAdmin)
+	router.GET("/bots/users/orders/payments-by-bot", c.GetOrderPaymentsByBot)
+	router.GET("/bots/users/orders/payments-by-user", c.GetOrderPaymentsByUser)
+	router.GET("/bots/users/orders/orders-by-user-for-admin", c.GetOrdersByUserForAdmin)
+	router.POST("/bots/users/orders/orders-by-user-for-user", c.GetOrdersByUserForUser)
+	router.POST("/bots/users/orders/order", c.GetOrder)
+	router.POST("/bots/users/orders/cancel-subscription-by-user", c.CancelSubscriptionByUser)
+	router.GET("/bots/users/orders/cancel-subscription-by-admin", c.CancelSubscriptionByAdmin)
+	router.GET(
+		"/bots/users/orders/cancel-subscriptions-by-payment-option",
+		c.CancelSubscriptionsByPaymentOption,
+	)
+}
+
+5. Check that use use valid .Query("param") and .Param("param") methods.
+If route does not have param - use .Query("query")

@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Do not write obsious comments.
+Write meaningful code, give meaningful names

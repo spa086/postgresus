@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: golangci-lint-fmt
+        name: Format Go Code using golangci-lint fmt
+        entry: golangci-lint fmt ./...
+        language: system
+        types: [go]
+
+      - id: golangci-lint-run
+        name: Run golangci-lint for static analysis
+        entry: golangci-lint run
+        language: system
+        types: [go]
+        pass_filenames: false

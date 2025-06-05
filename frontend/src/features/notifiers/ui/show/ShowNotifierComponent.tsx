@@ -1,0 +1,32 @@
+import { type Notifier, NotifierType } from '../../../../entity/notifiers';
+import { getNotifierLogoFromType } from '../../../../entity/notifiers/models/getNotifierLogoFromType';
+import { getNotifierNameFromType } from '../../../../entity/notifiers/models/getNotifierNameFromType';
+import { ShowEmailNotifierComponent } from './notifier/ShowEmailNotifierComponent';
+import { ShowTelegramNotifierComponent } from './notifier/ShowTelegramNotifierComponent';
+
+interface Props {
+  notifier: Notifier;
+}
+
+export function ShowNotifierComponent({ notifier }: Props) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center">
+        <div className="min-w-[110px]">Type</div>
+
+        {getNotifierNameFromType(notifier?.notifierType)}
+        <img src={getNotifierLogoFromType(notifier?.notifierType)} className="ml-1 h-4 w-4" />
+      </div>
+
+      <div>
+        {notifier?.notifierType === NotifierType.TELEGRAM && (
+          <ShowTelegramNotifierComponent notifier={notifier} />
+        )}
+
+        {notifier?.notifierType === NotifierType.EMAIL && (
+          <ShowEmailNotifierComponent notifier={notifier} />
+        )}
+      </div>
+    </div>
+  );
+}
