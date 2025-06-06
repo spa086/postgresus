@@ -17,8 +17,10 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
   const [isShowAddDatabase, setIsShowAddDatabase] = useState(false);
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | undefined>(undefined);
 
-  const loadDatabases = () => {
-    setIsLoading(true);
+  const loadDatabases = (isSilent = false) => {
+    if (!isSilent) {
+      setIsLoading(true);
+    }
 
     databaseApi
       .getDatabases()
@@ -34,6 +36,12 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
 
   useEffect(() => {
     loadDatabases();
+
+    const interval = setInterval(() => {
+      loadDatabases(true);
+    }, 60_000);
+
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) {
@@ -47,7 +55,10 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
   return (
     <>
       <div className="flex grow">
-        <div className="mx-3 min-w-[250px] w-[250px] overflow-y-auto" style={{ height: contentHeight }}>
+        <div
+          className="mx-3 w-[250px] min-w-[250px] overflow-y-auto"
+          style={{ height: contentHeight }}
+        >
           {databases.map((database) => (
             <DatabaseCardComponent
               key={database.id}
