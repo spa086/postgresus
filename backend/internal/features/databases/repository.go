@@ -111,6 +111,7 @@ func (r *DatabaseRepository) FindByUserID(userID uuid.UUID) ([]*Database, error)
 		Preload("Storage").
 		Preload("Notifiers").
 		Where("user_id = ?", userID).
+		Order("name ASC").
 		Find(&databases).Error; err != nil {
 		return nil, err
 	}
