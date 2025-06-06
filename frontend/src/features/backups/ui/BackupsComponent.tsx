@@ -193,6 +193,7 @@ export const BackupsComponent = ({ database }: Props) => {
       ),
       dataIndex: 'backupSizeMb',
       key: 'backupSizeMb',
+      width: 150,
       render: (sizeMb: number) => {
         if (sizeMb >= 1024) {
           const sizeGb = sizeMb / 1024;
@@ -205,11 +206,17 @@ export const BackupsComponent = ({ database }: Props) => {
       title: 'Duration',
       dataIndex: 'backupDurationMs',
       key: 'backupDurationMs',
+      width: 150,
       render: (durationMs: number) => {
-        const minutes = Math.floor(durationMs / 60000);
+        const hours = Math.floor(durationMs / 3600000);
+        const minutes = Math.floor((durationMs % 3600000) / 60000);
         const seconds = Math.floor((durationMs % 60000) / 1000);
-        const milliseconds = durationMs % 1000;
-        return `${minutes}m ${seconds}s ${milliseconds}ms`;
+
+        if (hours > 0) {
+          return `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        return `${minutes}m ${seconds}s`;
       },
     },
     {
@@ -275,17 +282,17 @@ export const BackupsComponent = ({ database }: Props) => {
         </Button>
       </div>
 
-      <div className="mt-5" />
-
-      <Table
-        bordered
-        columns={columns}
-        dataSource={backups}
-        rowKey="id"
-        loading={isLoading}
-        size="small"
-        pagination={false}
-      />
+      <div className="mt-5 max-w-[850px]">
+        <Table
+          bordered
+          columns={columns}
+          dataSource={backups}
+          rowKey="id"
+          loading={isLoading}
+          size="small"
+          pagination={false}
+        />
+      </div>
 
       {deleteConfimationId && (
         <ConfirmationComponent
