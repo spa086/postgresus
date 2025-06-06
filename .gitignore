@@ -1,3 +1,4 @@
 postgresus_data/
+postgresus-data/
 .env
 pgdata/
