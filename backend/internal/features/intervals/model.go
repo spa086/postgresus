@@ -96,6 +96,7 @@ func (i *Interval) shouldTriggerDaily(now, lastBackup time.Time) bool {
 			}
 		}
 	}
+
 	// no TimeOfDay: if it's a new calendar day
 	return !isSameDay(lastBackup, now)
 }
@@ -104,35 +105,45 @@ func (i *Interval) shouldTriggerDaily(now, lastBackup time.Time) bool {
 func (i *Interval) shouldTriggerWeekly(now, lastBackup time.Time) bool {
 	if i.Weekday != nil {
 		targetWd := time.Weekday(*i.Weekday)
+
+		// Calculate the target datetime for this week
 		startOfWeek := getStartOfWeek(now)
 
-		// today is target weekday and no backup this week
-		if now.Weekday() == targetWd && lastBackup.Before(startOfWeek) {
-			if i.TimeOfDay != nil {
-				t, err := time.Parse("15:04", *i.TimeOfDay)
-				if err == nil {
-					todayT := time.Date(
-						now.Year(),
-						now.Month(),
-						now.Day(),
-						t.Hour(),
-						t.Minute(),
-						0,
-						0,
-						now.Location(),
-					)
-					return now.After(todayT) || now.Equal(todayT)
-				}
+		// Convert Go weekday to days from Monday: Sunday=6, Monday=0, Tuesday=1, ..., Saturday=5
+		var daysFromMonday int
+		if targetWd == time.Sunday {
+			daysFromMonday = 6
+		} else {
+			daysFromMonday = int(targetWd) - 1
+		}
+
+		targetThisWeek := startOfWeek.AddDate(0, 0, daysFromMonday)
+
+		if i.TimeOfDay != nil {
+			t, err := time.Parse("15:04", *i.TimeOfDay)
+			if err == nil {
+				targetThisWeek = time.Date(
+					targetThisWeek.Year(),
+					targetThisWeek.Month(),
+					targetThisWeek.Day(),
+					t.Hour(),
+					t.Minute(),
+					0,
+					0,
+					targetThisWeek.Location(),
+				)
 			}
-			return true
 		}
-		// passed this week's slot and missed entirely
-		targetThisWeek := startOfWeek.AddDate(0, 0, int(targetWd))
-		if now.After(targetThisWeek) && lastBackup.Before(startOfWeek) {
-			return true
+
+		// If current time is at or after the target time this week
+		// and no backup has been made at or after the target time, trigger
+		if now.After(targetThisWeek) || now.Equal(targetThisWeek) {
+			return lastBackup.Before(targetThisWeek)
 		}
+
 		return false
 	}
+
 	// no Weekday: generic 7-day interval
 	return now.Sub(lastBackup) >= 7*24*time.Hour
 }
@@ -141,32 +152,32 @@ func (i *Interval) shouldTriggerWeekly(now, lastBackup time.Time) bool {
 func (i *Interval) shouldTriggerMonthly(now, lastBackup time.Time) bool {
 	if i.DayOfMonth != nil {
 		day := *i.DayOfMonth
-		startOfMonth := getStartOfMonth(now)
 
-		// today is target day and no backup this month
-		if now.Day() == day && lastBackup.Before(startOfMonth) {
-			if i.TimeOfDay != nil {
-				t, err := time.Parse("15:04", *i.TimeOfDay)
-				if err == nil {
-					todayT := time.Date(
-						now.Year(),
-						now.Month(),
-						now.Day(),
-						t.Hour(),
-						t.Minute(),
-						0,
-						0,
-						now.Location(),
-					)
-					return now.After(todayT) || now.Equal(todayT)
-				}
+		// Calculate the target datetime for this month
+		targetThisMonth := time.Date(now.Year(), now.Month(), day, 0, 0, 0, 0, now.Location())
+
+		if i.TimeOfDay != nil {
+			t, err := time.Parse("15:04", *i.TimeOfDay)
+			if err == nil {
+				targetThisMonth = time.Date(
+					targetThisMonth.Year(),
+					targetThisMonth.Month(),
+					targetThisMonth.Day(),
+					t.Hour(),
+					t.Minute(),
+					0,
+					0,
+					targetThisMonth.Location(),
+				)
 			}
-			return true
 		}
-		// passed this month's slot and missed entirely
-		if now.Day() > day && lastBackup.Before(startOfMonth) {
-			return true
+
+		// If current time is at or after the target time this month
+		// and no backup has been made at or after the target time, trigger
+		if now.After(targetThisMonth) || now.Equal(targetThisMonth) {
+			return lastBackup.Before(targetThisMonth)
 		}
+
 		return false
 	}
 	// no DayOfMonth: if we're in a new calendar month

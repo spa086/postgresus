@@ -143,28 +143,30 @@ func TestInterval_ShouldTriggerBackup_Weekly(t *testing.T) {
 	})
 
 	t.Run(
-		"Backup already done this week (Wednesday 15:00): Do not trigger again",
+		"Backup already done at scheduled time (Wednesday 15:00): Do not trigger again",
 		func(t *testing.T) {
-			now := time.Date(2024, 1, 18, 10, 0, 0, 0, time.UTC)        // Thursday
-			lastBackup := time.Date(2024, 1, 17, 15, 0, 0, 0, time.UTC) // Wednesday this week
+			now := time.Date(2024, 1, 18, 10, 0, 0, 0, time.UTC) // Thursday
+
+			// Wednesday this week at scheduled time
+			lastBackup := time.Date(
+				2024,
+				1,
+				17,
+				15,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
 			should := interval.ShouldTriggerBackup(now, &lastBackup)
 			assert.False(t, should)
 		},
 	)
 
 	t.Run(
-		"Backup missed yesterday (it's Thursday): Trigger backup immediately",
+		"Manual backup before scheduled time should not prevent scheduled backup",
 		func(t *testing.T) {
-			now := time.Date(2024, 1, 18, 10, 0, 0, 0, time.UTC)        // Thursday
-			lastBackup := time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC) // Previous week
-			should := interval.ShouldTriggerBackup(now, &lastBackup)
-			assert.True(t, should)
-		},
-	)
-
-	t.Run(
-		"Backup last week: Trigger backup at this week's scheduled time or immediately if already missed",
-		func(t *testing.T) {
+			// Wednesday at scheduled time
 			now := time.Date(
 				2024,
 				1,
@@ -174,10 +176,115 @@ func TestInterval_ShouldTriggerBackup_Weekly(t *testing.T) {
 				0,
 				0,
 				time.UTC,
-			) // Wednesday at scheduled time
+			)
+			// Manual backup same day, before scheduled time
+			lastBackup := time.Date(
+				2024,
+				1,
+				17,
+				10,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.True(t, should)
+		},
+	)
+
+	t.Run(
+		"Manual backup after scheduled time should prevent another backup",
+		func(t *testing.T) {
+			now := time.Date(2024, 1, 18, 10, 0, 0, 0, time.UTC) // Thursday
+			// Manual backup after scheduled time
+			lastBackup := time.Date(
+				2024,
+				1,
+				17,
+				16,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.False(t, should)
+		},
+	)
+
+	t.Run(
+		"Backup missed completely: Trigger backup immediately after scheduled time",
+		func(t *testing.T) {
+			// Thursday after missed Wednesday
+			now := time.Date(
+				2024,
+				1,
+				18,
+				10,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
 			lastBackup := time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC) // Previous week
 			should := interval.ShouldTriggerBackup(now, &lastBackup)
 			assert.True(t, should)
+		},
+	)
+
+	t.Run(
+		"Backup last week: Trigger backup at this week's scheduled time",
+		func(t *testing.T) {
+			// Wednesday at scheduled time
+			now := time.Date(
+				2024,
+				1,
+				17,
+				15,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
+			lastBackup := time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC) // Previous week
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.True(t, should)
+		},
+	)
+
+	t.Run(
+		"User's scenario: Weekly Friday 00:00 backup should trigger even after Wednesday manual backup",
+		func(t *testing.T) {
+			timeOfDay := "00:00"
+			weekday := 5 // Friday (0=Sunday, 1=Monday, ..., 5=Friday)
+			fridayInterval := &Interval{
+				ID:        uuid.New(),
+				Interval:  IntervalWeekly,
+				TimeOfDay: &timeOfDay,
+				Weekday:   &weekday,
+			}
+
+			// Friday at 00:00 - scheduled backup time
+			friday := time.Date(2024, 1, 19, 0, 0, 0, 0, time.UTC) // Friday Jan 19, 2024
+			// Manual backup was done on Wednesday
+			wednesdayBackup := time.Date(
+				2024,
+				1,
+				17,
+				21,
+				0,
+				0,
+				0,
+				time.UTC,
+			) // Wednesday Jan 17, 2024 at 21:00
+
+			should := fridayInterval.ShouldTriggerBackup(friday, &wednesdayBackup)
+			assert.True(
+				t,
+				should,
+				"Friday scheduled backup should trigger despite Wednesday manual backup",
+			)
 		},
 	)
 }
@@ -238,17 +345,58 @@ func TestInterval_ShouldTriggerBackup_Monthly(t *testing.T) {
 		},
 	)
 
-	t.Run("Backup already performed this month: Do not trigger again", func(t *testing.T) {
+	t.Run("Backup already performed at scheduled time: Do not trigger again", func(t *testing.T) {
 		now := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-		lastBackup := time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC) // This month
+		lastBackup := time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC) // This month at scheduled time
 		should := interval.ShouldTriggerBackup(now, &lastBackup)
 		assert.False(t, should)
 	})
 
 	t.Run(
-		"Backup performed last month on schedule: Trigger backup this month at or after scheduled date/time",
+		"Manual backup before scheduled time should not prevent scheduled backup",
+		func(t *testing.T) {
+			now := time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC) // Scheduled time
+			// Manual backup earlier this month
+			lastBackup := time.Date(
+				2024,
+				1,
+				5,
+				10,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.True(t, should)
+		},
+	)
+
+	t.Run(
+		"Manual backup after scheduled time should prevent another backup",
+		func(t *testing.T) {
+			now := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+			// Manual backup after scheduled time
+			lastBackup := time.Date(
+				2024,
+				1,
+				10,
+				9,
+				0,
+				0,
+				0,
+				time.UTC,
+			)
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.False(t, should)
+		},
+	)
+
+	t.Run(
+		"Backup performed last month on schedule: Trigger backup this month at scheduled time",
 		func(t *testing.T) {
 			now := time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC)
+			// Previous month at scheduled time
 			lastBackup := time.Date(
 				2023,
 				12,
@@ -258,7 +406,7 @@ func TestInterval_ShouldTriggerBackup_Monthly(t *testing.T) {
 				0,
 				0,
 				time.UTC,
-			) // Previous month at scheduled time
+			)
 			should := interval.ShouldTriggerBackup(now, &lastBackup)
 			assert.True(t, should)
 		},

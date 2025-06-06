@@ -195,7 +195,11 @@ func runMigrations(log *slog.Logger) {
 	log.Info("Running database migrations...")
 
 	cmd := exec.Command("goose", "up")
-	cmd.Env = append(os.Environ(), "GOOSE_DRIVER=postgres", "GOOSE_DBSTRING="+config.GetEnv().DatabaseDsn)
+	cmd.Env = append(
+		os.Environ(),
+		"GOOSE_DRIVER=postgres",
+		"GOOSE_DBSTRING="+config.GetEnv().DatabaseDsn,
+	)
 
 	// Set the working directory to where migrations are located
 	cmd.Dir = "./migrations"
