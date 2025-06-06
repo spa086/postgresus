@@ -25,6 +25,7 @@ import (
 	"postgresus-backend/internal/util/logger"
 	_ "postgresus-backend/swagger" // swagger docs
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -49,6 +50,27 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	ginApp := gin.Default()
+
+	// Setup CORS
+	ginApp.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Length",
+			"Content-Type",
+			"Authorization",
+			"Accept",
+			"Accept-Language",
+			"Accept-Encoding",
+			"Access-Control-Request-Method",
+			"Access-Control-Request-Headers",
+			"Access-Control-Allow-Methods",
+			"Access-Control-Allow-Headers",
+			"Access-Control-Allow-Origin",
+		},
+		AllowCredentials: true,
+	}))
 
 	setUpRoutes(ginApp)
 	setUpDependencies()
