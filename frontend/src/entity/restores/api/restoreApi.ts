@@ -8,6 +8,8 @@ export const restoreApi = {
   async getRestores(backupId: string) {
     return apiHelper.fetchGetJson<Restore[]>(
       `${getApplicationServer()}/api/v1/restores/${backupId}`,
+      undefined,
+      true,
     );
   },
 

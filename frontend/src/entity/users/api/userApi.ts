@@ -43,7 +43,11 @@ export const userApi = {
   async isAnyUserExists(): Promise<boolean> {
     const requestOptions: RequestOptions = new RequestOptions();
     return apiHelper
-      .fetchGetJson(`${getApplicationServer()}/api/v1/users/is-any-user-exist`, requestOptions)
+      .fetchGetJson(
+        `${getApplicationServer()}/api/v1/users/is-any-user-exist`,
+        requestOptions,
+        true,
+      )
       .then((response: unknown) => {
         const typedResponse = response as { isExist: boolean };
         return typedResponse.isExist;

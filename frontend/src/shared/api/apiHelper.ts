@@ -1,6 +1,9 @@
 import { accessTokenHelper } from '.';
 import RequestOptions from './RequestOptions';
 
+const REPEAT_TRIES_COUNT = 10;
+const REPEAT_INTERVAL_MS = 3_000;
+
 const handleOrThrowMessageIfResponseError = async (
   url: string,
   response: Response,
@@ -33,14 +36,31 @@ const handleOrThrowMessageIfResponseError = async (
   }
 };
 
-const makeRequest = async (url: string, optionsWrapper: RequestOptions): Promise<Response> => {
-  const response = await fetch(url, optionsWrapper.toRequestInit());
-  await handleOrThrowMessageIfResponseError(url, response);
-  return response;
+const makeRequest = async (
+  url: string,
+  optionsWrapper: RequestOptions,
+  currentTry = 0,
+): Promise<Response> => {
+  try {
+    const response = await fetch(url, optionsWrapper.toRequestInit());
+    await handleOrThrowMessageIfResponseError(url, response);
+    return response;
+  } catch (e) {
+    if (currentTry < REPEAT_TRIES_COUNT) {
+      await new Promise((resolve) => setTimeout(resolve, REPEAT_INTERVAL_MS));
+      return makeRequest(url, optionsWrapper, currentTry + 1);
+    }
+
+    throw e;
+  }
 };
 
 export const apiHelper = {
-  fetchPostJson: async <T>(url: string, requestOptions?: RequestOptions): Promise<T> => {
+  fetchPostJson: async <T>(
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<T> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('POST')
       .addHeader('Content-Type', 'application/json')
@@ -48,12 +68,20 @@ export const apiHelper = {
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
 
     return response.json();
   },
 
-  fetchPostRaw: async (url: string, requestOptions?: RequestOptions): Promise<string> => {
+  fetchPostRaw: async (
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<string> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('POST')
       .addHeader('Content-Type', 'application/json')
@@ -61,56 +89,99 @@ export const apiHelper = {
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
 
     return response.text();
   },
 
-  fetchPostBlob: async (url: string, requestOptions?: RequestOptions): Promise<Blob> => {
+  fetchPostBlob: async (
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<Blob> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('POST')
       .addHeader('Content-Type', 'application/json')
       .addHeader('Access-Control-Allow-Methods', 'POST')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
 
     return response.blob();
   },
 
-  fetchGetJson: async <T>(url: string, requestOptions?: RequestOptions): Promise<T> => {
+  fetchGetJson: async <T>(
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<T> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .addHeader('Content-Type', 'application/json')
       .addHeader('Access-Control-Allow-Methods', 'GET')
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.json();
   },
 
-  fetchGetRaw: async (url: string, requestOptions?: RequestOptions): Promise<string> => {
+  fetchGetRaw: async (
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<string> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .addHeader('Content-Type', 'application/json')
       .addHeader('Access-Control-Allow-Methods', 'GET')
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.text();
   },
 
-  fetchGetBlob: async (url: string, requestOptions?: RequestOptions): Promise<Blob> => {
+  fetchGetBlob: async (
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<Blob> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .addHeader('Content-Type', 'application/json')
       .addHeader('Access-Control-Allow-Methods', 'GET')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.blob();
   },
 
-  fetchPutJson: async <T>(url: string, requestOptions?: RequestOptions): Promise<T> => {
+  fetchPutJson: async <T>(
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<T> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('PUT')
       .addHeader('Content-Type', 'application/json')
@@ -118,29 +189,52 @@ export const apiHelper = {
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.json();
   },
 
-  fetchDeleteJson: async <T>(url: string, requestOptions?: RequestOptions): Promise<T> => {
+  fetchDeleteJson: async <T>(
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<T> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('DELETE')
       .addHeader('Access-Control-Allow-Methods', 'DELETE')
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.json();
   },
 
-  fetchDeleteRaw: async (url: string, requestOptions?: RequestOptions): Promise<string> => {
+  fetchDeleteRaw: async (
+    url: string,
+    requestOptions?: RequestOptions,
+    isRetryOnError = false,
+  ): Promise<string> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
       .setMethod('DELETE')
       .addHeader('Access-Control-Allow-Methods', 'DELETE')
       .addHeader('Accept', 'application/json')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 
-    const response = await makeRequest(url, optionsWrapper);
+    const response = await makeRequest(
+      url,
+      optionsWrapper,
+      isRetryOnError ? 0 : REPEAT_TRIES_COUNT,
+    );
+
     return response.text();
   },
 };

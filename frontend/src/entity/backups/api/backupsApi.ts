@@ -7,6 +7,8 @@ export const backupsApi = {
   async getBackups(databaseId: string) {
     return apiHelper.fetchGetJson<Backup[]>(
       `${getApplicationServer()}/api/v1/backups?database_id=${databaseId}`,
+      undefined,
+      true,
     );
   },
 

@@ -18,6 +18,7 @@ export const storageApi = {
     return apiHelper.fetchGetJson<Storage>(
       `${getApplicationServer()}/api/v1/storages/${id}`,
       requestOptions,
+      true,
     );
   },
 
@@ -26,6 +27,7 @@ export const storageApi = {
     return apiHelper.fetchGetJson<Storage[]>(
       `${getApplicationServer()}/api/v1/storages`,
       requestOptions,
+      true,
     );
   },
 

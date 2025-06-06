@@ -27,6 +27,7 @@ export const databaseApi = {
     return apiHelper.fetchGetJson<Database>(
       `${getApplicationServer()}/api/v1/databases/${id}`,
       requestOptions,
+      true,
     );
   },
 
@@ -35,6 +36,7 @@ export const databaseApi = {
     return apiHelper.fetchGetJson<Database[]>(
       `${getApplicationServer()}/api/v1/databases`,
       requestOptions,
+      true,
     );
   },
 
@@ -71,6 +73,7 @@ export const databaseApi = {
       }>(
         `${getApplicationServer()}/api/v1/databases/notifier/${notifierId}/is-using`,
         requestOptions,
+        true,
       )
       .then((res) => res.isUsing);
   },
@@ -80,7 +83,11 @@ export const databaseApi = {
     return apiHelper
       .fetchGetJson<{
         isUsing: boolean;
-      }>(`${getApplicationServer()}/api/v1/databases/storage/${storageId}/is-using`, requestOptions)
+      }>(
+        `${getApplicationServer()}/api/v1/databases/storage/${storageId}/is-using`,
+        requestOptions,
+        true,
+      )
       .then((res) => res.isUsing);
   },
 };

@@ -18,6 +18,7 @@ export const notifierApi = {
     return apiHelper.fetchGetJson<Notifier>(
       `${getApplicationServer()}/api/v1/notifiers/${id}`,
       requestOptions,
+      true,
     );
   },
 
@@ -26,6 +27,7 @@ export const notifierApi = {
     return apiHelper.fetchGetJson<Notifier[]>(
       `${getApplicationServer()}/api/v1/notifiers`,
       requestOptions,
+      true,
     );
   },
 
