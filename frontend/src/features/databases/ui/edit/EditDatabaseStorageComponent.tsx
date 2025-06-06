@@ -82,7 +82,7 @@ export const EditDatabaseStorageComponent = ({
     setEditingDatabase({ ...database });
     loadStorages();
 
-    if (database.storage.id) {
+    if (database.id) {
       setIsShowWarn(true);
     }
   }, [database]);
@@ -148,7 +148,7 @@ export const EditDatabaseStorageComponent = ({
             type="primary"
             onClick={() => saveDatabase()}
             loading={isSaving}
-            disabled={isSaving}
+            disabled={isSaving || !editingDatabase.storage.id}
             className="mr-5"
           >
             {saveButtonText || 'Save'}
