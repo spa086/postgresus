@@ -4,6 +4,7 @@ import { DatabasesComponent } from '../../features/databases/ui/DatabasesCompone
 import { NotifiersComponent } from '../../features/notifiers/ui/NotifiersComponent';
 import { StoragesComponent } from '../../features/storages/StoragesComponent';
 import { useScreenHeight } from '../../shared/hooks';
+import GitHubButton from 'react-github-btn';
 
 export const MainScreenComponent = () => {
   const screenHeight = useScreenHeight();
@@ -35,24 +36,27 @@ export const MainScreenComponent = () => {
           </div>
         </div>
 
-        <div className="mr-3 ml-auto flex gap-5">
+        <div className="mr-3 ml-auto flex items-center gap-5">
           <a
             className="hover:opacity-80"
-            href="https://postgresus.com/community"
+            href="https://t.me/postgresus_community"
             target="_blank"
             rel="noreferrer"
           >
             Community
           </a>
 
-          <a
-            className="hover:opacity-80"
-            href="https://github.com/postgresus/postgresus"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
+          <div className="mt-1">
+            <GitHubButton
+              href="https://github.com/RostislavDugin/postgresus"
+              data-icon="octicon-star"
+              data-size="large"
+              data-show-count="true"
+              aria-label="Star RostislavDugin/postgresus on GitHub"
+            >
+              &nbsp;Star on GitHub
+            </GitHubButton>
+          </div>
         </div>
       </div>
       {/* ===================== END NAVBAR ===================== */}

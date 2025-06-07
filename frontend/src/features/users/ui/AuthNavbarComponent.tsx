@@ -1,3 +1,5 @@
+import GitHubButton from 'react-github-btn';
+
 export function AuthNavbarComponent() {
   return (
     <div className="m-3 flex h-[65px] items-center p-3">
@@ -13,7 +15,7 @@ export function AuthNavbarComponent() {
         </div>
       </div>
 
-      <div className="mr-3 ml-auto flex gap-5">
+      <div className="mr-3 ml-auto flex items-center gap-5">
         <a
           className="hover:opacity-80"
           href="https://postgresus.com/community"
@@ -23,14 +25,17 @@ export function AuthNavbarComponent() {
           Community
         </a>
 
-        <a
-          className="hover:opacity-80"
-          href="https://github.com/postgresus/postgresus"
-          target="_blank"
-          rel="noreferrer"
-        >
-          GitHub
-        </a>
+        <div className='mt-1'>
+          <GitHubButton
+            href="https://github.com/RostislavDugin/postgresus"
+            data-icon="octicon-star"
+            data-size="large"
+            data-show-count="true"
+            aria-label="Star RostislavDugin/postgresus on GitHub"
+          >
+            &nbsp;Star on GitHub
+          </GitHubButton>
+        </div>
       </div>
     </div>
   );
