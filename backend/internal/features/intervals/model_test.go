@@ -104,6 +104,40 @@ func TestInterval_ShouldTriggerBackup_Daily(t *testing.T) {
 			assert.True(t, should)
 		},
 	)
+
+	t.Run(
+		"Manual backup before scheduled time should not prevent scheduled backup",
+		func(t *testing.T) {
+			timeOfDay := "21:00"
+			interval := &Interval{
+				ID:        uuid.New(),
+				Interval:  IntervalDaily,
+				TimeOfDay: &timeOfDay,
+			}
+
+			manual := time.Date(2025, 6, 6, 16, 17, 0, 0, time.UTC)   // manual earlier
+			scheduled := time.Date(2025, 6, 6, 21, 0, 0, 0, time.UTC) // scheduled time
+
+			should := interval.ShouldTriggerBackup(scheduled, &manual)
+			assert.True(t, should, "scheduled run should trigger even after earlier manual backup")
+		},
+	)
+
+	t.Run("Catch up previous time slot", func(t *testing.T) {
+		timeOfDay := "21:00"
+		interval := &Interval{
+			ID:        uuid.New(),
+			Interval:  IntervalDaily,
+			TimeOfDay: &timeOfDay,
+		}
+
+		// It's June-07 15:00 UTC, yesterday's scheduled backup was missed
+		now := time.Date(2025, 6, 7, 15, 0, 0, 0, time.UTC)
+		lastBackup := time.Date(2025, 6, 6, 16, 0, 0, 0, time.UTC) // before yesterday's 21:00
+
+		should := interval.ShouldTriggerBackup(now, &lastBackup)
+		assert.True(t, should, "should catch up missed 21:00 backup the next day at 15:00")
+	})
 }
 
 func TestInterval_ShouldTriggerBackup_Weekly(t *testing.T) {

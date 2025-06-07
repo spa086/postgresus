@@ -64,41 +64,34 @@ func (i *Interval) ShouldTriggerBackup(now time.Time, lastBackupTime *time.Time)
 	}
 }
 
-// daily trigger: calendar-based if TimeOfDay set, otherwise next calendar day
+// daily trigger: honour the TimeOfDay slot and catch up the previous one
 func (i *Interval) shouldTriggerDaily(now, lastBackup time.Time) bool {
-	if i.TimeOfDay != nil {
-		target, err := time.Parse("15:04", *i.TimeOfDay)
-		if err == nil {
-			todayTarget := time.Date(
-				now.Year(),
-				now.Month(),
-				now.Day(),
-				target.Hour(),
-				target.Minute(),
-				0,
-				0,
-				now.Location(),
-			)
-
-			// if it's past today's target time and we haven't backed up today
-			if now.After(todayTarget) && !isSameDay(lastBackup, now) {
-				return true
-			}
-
-			// if it's exactly the target time and we haven't backed up today
-			if now.Equal(todayTarget) && !isSameDay(lastBackup, now) {
-				return true
-			}
-
-			// if it's before today's target time, don't trigger yet
-			if now.Before(todayTarget) {
-				return false
-			}
-		}
+	if i.TimeOfDay == nil {
+		return !isSameDay(lastBackup, now)
 	}
 
-	// no TimeOfDay: if it's a new calendar day
-	return !isSameDay(lastBackup, now)
+	t, err := time.Parse("15:04", *i.TimeOfDay)
+	if err != nil {
+		return false // malformed ⇒ play safe
+	}
+
+	// Today's scheduled slot (todayTgt)
+	todayTgt := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		t.Hour(), t.Minute(), 0, 0, now.Location(),
+	)
+
+	// The last scheduled slot that should already have happened
+	var lastScheduled time.Time
+	if now.Before(todayTgt) {
+		lastScheduled = todayTgt.AddDate(0, 0, -1)
+	} else {
+		lastScheduled = todayTgt
+	}
+
+	// Fire when we are past that slot AND no backup has been taken since it
+	return (now.After(lastScheduled) || now.Equal(lastScheduled)) &&
+		lastBackup.Before(lastScheduled)
 }
 
 // weekly trigger: on specified weekday/calendar week, otherwise ≥7 days
