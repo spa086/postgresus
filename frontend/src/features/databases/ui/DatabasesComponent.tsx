@@ -26,7 +26,7 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
       .getDatabases()
       .then((databases) => {
         setDatabases(databases);
-        if (!selectedDatabaseId) {
+        if (!selectedDatabaseId && !isSilent) {
           setSelectedDatabaseId(databases[0]?.id);
         }
       })
