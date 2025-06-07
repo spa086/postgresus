@@ -39,7 +39,7 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
 
     const interval = setInterval(() => {
       loadDatabases(true);
-    }, 60_000);
+    }, 5 * 60_000);
 
     return () => clearInterval(interval);
   }, []);
