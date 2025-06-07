@@ -4,6 +4,11 @@ import { useMemo } from 'react';
 import { type Database } from '../../../../entity/databases';
 import { Period } from '../../../../entity/databases/model/Period';
 import { IntervalType } from '../../../../entity/intervals';
+import {
+  getLocalDayOfMonth,
+  getLocalWeekday,
+  getUserTimeFormat,
+} from '../../../../shared/time/utils';
 
 interface Props {
   database: Database;
@@ -41,14 +46,6 @@ const periodLabels = {
   [Period.FOREVER]: 'Forever',
 };
 
-// Function to detect if user prefers 12-hour format based on their locale
-const getUserTimeFormat = () => {
-  const locale = navigator.language || 'en-US';
-  const testDate = new Date(2023, 0, 1, 13, 0, 0); // 1 PM
-  const timeString = testDate.toLocaleTimeString(locale, { hour: 'numeric' });
-  return timeString.includes('PM') || timeString.includes('AM');
-};
-
 export const ShowDatabaseBaseInfoComponent = ({ database, isShowName }: Props) => {
   // Detect user's preferred time format (12-hour vs 24-hour)
   const timeFormat = useMemo(() => {
@@ -66,6 +63,21 @@ export const ShowDatabaseBaseInfoComponent = ({ database, isShowName }: Props) =
     : undefined;
 
   const formattedTime = localTime ? localTime.format(timeFormat.format) : '';
+
+  // Convert UTC weekday/day-of-month to local equivalents for display
+  const displayedWeekday: number | undefined =
+    backupInterval?.interval === IntervalType.WEEKLY &&
+    backupInterval.weekday &&
+    backupInterval.timeOfDay
+      ? getLocalWeekday(backupInterval.weekday, backupInterval.timeOfDay)
+      : backupInterval?.weekday;
+
+  const displayedDayOfMonth: number | undefined =
+    backupInterval?.interval === IntervalType.MONTHLY &&
+    backupInterval.dayOfMonth &&
+    backupInterval.timeOfDay
+      ? getLocalDayOfMonth(backupInterval.dayOfMonth, backupInterval.timeOfDay)
+      : backupInterval?.dayOfMonth;
 
   return (
     <div>
@@ -85,9 +97,7 @@ export const ShowDatabaseBaseInfoComponent = ({ database, isShowName }: Props) =
         <div className="mb-1 flex w-full items-center">
           <div className="min-w-[150px]">Backup weekday</div>
           <div>
-            {backupInterval.weekday
-              ? weekdayLabels[backupInterval.weekday as keyof typeof weekdayLabels]
-              : ''}
+            {displayedWeekday ? weekdayLabels[displayedWeekday as keyof typeof weekdayLabels] : ''}
           </div>
         </div>
       )}
@@ -95,7 +105,7 @@ export const ShowDatabaseBaseInfoComponent = ({ database, isShowName }: Props) =
       {backupInterval?.interval === IntervalType.MONTHLY && (
         <div className="mb-1 flex w-full items-center">
           <div className="min-w-[150px]">Backup day of month</div>
-          <div>{backupInterval.dayOfMonth || ''}</div>
+          <div>{displayedDayOfMonth || ''}</div>
         </div>
       )}
 

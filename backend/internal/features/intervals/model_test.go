@@ -94,6 +94,16 @@ func TestInterval_ShouldTriggerBackup_Daily(t *testing.T) {
 			assert.True(t, should)
 		},
 	)
+
+	t.Run(
+		"Backup yesterday at 15:00: Trigger backup today at 09:00",
+		func(t *testing.T) {
+			now := time.Date(2024, 1, 15, 9, 0, 0, 0, time.UTC)
+			lastBackup := time.Date(2024, 1, 14, 15, 0, 0, 0, time.UTC) // Yesterday at 15:00
+			should := interval.ShouldTriggerBackup(now, &lastBackup)
+			assert.True(t, should)
+		},
+	)
 }
 
 func TestInterval_ShouldTriggerBackup_Weekly(t *testing.T) {

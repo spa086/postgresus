@@ -1,1 +1,1 @@
-export type LocalStorage = object
+export type LocalStorage = object;

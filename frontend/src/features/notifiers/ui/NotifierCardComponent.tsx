@@ -20,7 +20,7 @@ export const NotifierCardComponent = ({
       className={`mb-3 cursor-pointer rounded p-3 shadow ${selectedNotifierId === notifier.id ? 'bg-blue-100' : 'bg-white'}`}
       onClick={() => setSelectedNotifierId(notifier.id)}
     >
-      <div className="font-bold mb-1">{notifier.name}</div>
+      <div className="mb-1 font-bold">{notifier.name}</div>
 
       <div className="flex items-center">
         <div className="text-sm text-gray-500">

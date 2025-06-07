@@ -6,19 +6,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { type Database, databaseApi } from '../../../../entity/databases';
 import { Period } from '../../../../entity/databases/model/Period';
 import { type Interval, IntervalType } from '../../../../entity/intervals';
-
-interface Props {
-  database: Database;
-
-  isShowName?: boolean;
-
-  isShowCancelButton?: boolean;
-  onCancel: () => void;
-
-  saveButtonText?: string;
-  isSaveToApi: boolean;
-  onSaved: (database: Database) => void;
-}
+import {
+  getLocalDayOfMonth,
+  getLocalWeekday,
+  getUserTimeFormat,
+  getUtcDayOfMonth,
+  getUtcWeekday,
+} from '../../../../shared/time/utils';
 
 const weekdayOptions = [
   { value: 1, label: 'Mon' },
@@ -30,22 +24,23 @@ const weekdayOptions = [
   { value: 7, label: 'Sun' },
 ];
 
-// Function to detect if user prefers 12-hour format based on their locale
-const getUserTimeFormat = () => {
-  const locale = navigator.language || 'en-US';
-  const testDate = new Date(2023, 0, 1, 13, 0, 0); // 1 PM
-  const timeString = testDate.toLocaleTimeString(locale, { hour: 'numeric' });
-  return timeString.includes('PM') || timeString.includes('AM');
-};
+interface Props {
+  database: Database;
+
+  isShowName?: boolean;
+  isShowCancelButton?: boolean;
+  onCancel: () => void;
+
+  saveButtonText?: string;
+  isSaveToApi: boolean;
+  onSaved: (db: Database) => void;
+}
 
 export const EditDatabaseBaseInfoComponent = ({
   database,
-
   isShowName,
-
   isShowCancelButton,
   onCancel,
-
   saveButtonText,
   isSaveToApi,
   onSaved,
@@ -54,73 +49,83 @@ export const EditDatabaseBaseInfoComponent = ({
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Detect user's preferred time format (12-hour vs 24-hour)
   const timeFormat = useMemo(() => {
-    const is12Hour = getUserTimeFormat();
-    return {
-      use12Hours: is12Hour,
-      format: is12Hour ? 'h:mm A' : 'HH:mm',
-    };
+    const is12 = getUserTimeFormat();
+    return { use12Hours: is12, format: is12 ? 'h:mm A' : 'HH:mm' };
   }, []);
 
   const updateDatabase = (patch: Partial<Database>) => {
-    if (!editingDatabase) return;
-    setEditingDatabase({ ...editingDatabase, ...patch });
+    setEditingDatabase((prev) => (prev ? { ...prev, ...patch } : prev));
+    setIsUnsaved(true);
+  };
+
+  const saveInterval = (patch: Partial<Interval>) => {
+    setEditingDatabase((prev) => {
+      if (!prev) return prev;
+
+      const updatedBackupInterval = { ...(prev.backupInterval ?? {}), ...patch };
+
+      if (!updatedBackupInterval.id && prev.backupInterval?.id) {
+        updatedBackupInterval.id = prev.backupInterval.id;
+      }
+
+      return { ...prev, backupInterval: updatedBackupInterval as Interval };
+    });
+
     setIsUnsaved(true);
   };
 
   const saveDatabase = async () => {
     if (!editingDatabase) return;
-
     if (isSaveToApi) {
       setIsSaving(true);
-
       try {
         await databaseApi.updateDatabase(editingDatabase);
         setIsUnsaved(false);
       } catch (e) {
         alert((e as Error).message);
       }
-
       setIsSaving(false);
     }
-
     onSaved(editingDatabase);
-  };
-
-  const saveInterval = (patch: Partial<Interval>) => {
-    if (!editingDatabase) return;
-    const current = editingDatabase.backupInterval ?? ({} as Interval);
-    updateDatabase({ backupInterval: { ...current, ...patch } });
   };
 
   useEffect(() => {
     setIsSaving(false);
     setIsUnsaved(false);
-
     setEditingDatabase({ ...database });
   }, [database]);
 
   if (!editingDatabase) return null;
-
   const { backupInterval } = editingDatabase;
 
+  // UTC → local conversions for display
   const localTime: Dayjs | undefined = backupInterval?.timeOfDay
-    ? dayjs.utc(backupInterval.timeOfDay, 'HH:mm').local() /* cast to user tz */
+    ? dayjs.utc(backupInterval.timeOfDay, 'HH:mm').local()
     : undefined;
 
-  let isAllFieldsFilled = true;
+  const displayedWeekday: number | undefined =
+    backupInterval?.interval === IntervalType.WEEKLY &&
+    backupInterval.weekday &&
+    backupInterval.timeOfDay
+      ? getLocalWeekday(backupInterval.weekday, backupInterval.timeOfDay)
+      : backupInterval?.weekday;
 
-  if (!editingDatabase.name) isAllFieldsFilled = false;
-  if (!editingDatabase.storePeriod) isAllFieldsFilled = false;
+  const displayedDayOfMonth: number | undefined =
+    backupInterval?.interval === IntervalType.MONTHLY &&
+    backupInterval.dayOfMonth &&
+    backupInterval.timeOfDay
+      ? getLocalDayOfMonth(backupInterval.dayOfMonth, backupInterval.timeOfDay)
+      : backupInterval?.dayOfMonth;
 
-  if (!editingDatabase.backupInterval?.interval) isAllFieldsFilled = false;
-  if (editingDatabase.backupInterval?.interval === IntervalType.WEEKLY) {
-    if (!editingDatabase.backupInterval?.weekday) isAllFieldsFilled = false;
-  }
-  if (editingDatabase.backupInterval?.interval === IntervalType.MONTHLY) {
-    if (!editingDatabase.backupInterval.dayOfMonth) isAllFieldsFilled = false;
-  }
+  // mandatory-field check
+  const isAllFieldsFilled =
+    Boolean(editingDatabase.name) &&
+    Boolean(editingDatabase.storePeriod) &&
+    Boolean(backupInterval?.interval) &&
+    (!backupInterval ||
+      ((backupInterval.interval !== IntervalType.WEEKLY || displayedWeekday) &&
+        (backupInterval.interval !== IntervalType.MONTHLY || displayedDayOfMonth)));
 
   return (
     <div>
@@ -129,9 +134,7 @@ export const EditDatabaseBaseInfoComponent = ({
           <div className="min-w-[150px]">Name</div>
           <Input
             value={editingDatabase.name || ''}
-            onChange={(e) => {
-              updateDatabase({ name: e.target.value });
-            }}
+            onChange={(e) => updateDatabase({ name: e.target.value })}
             size="small"
             placeholder="My favourite DB"
             className="max-w-[200px] grow"
@@ -143,9 +146,7 @@ export const EditDatabaseBaseInfoComponent = ({
         <div className="min-w-[150px]">Backup interval</div>
         <Select
           value={backupInterval?.interval}
-          onChange={(v) => {
-            saveInterval({ interval: v });
-          }}
+          onChange={(v) => saveInterval({ interval: v })}
           size="small"
           className="max-w-[200px] grow"
           options={[
@@ -154,7 +155,6 @@ export const EditDatabaseBaseInfoComponent = ({
             { label: 'Weekly', value: IntervalType.WEEKLY },
             { label: 'Monthly', value: IntervalType.MONTHLY },
           ]}
-          placeholder="Select backup interval"
         />
       </div>
 
@@ -162,14 +162,15 @@ export const EditDatabaseBaseInfoComponent = ({
         <div className="mb-1 flex w-full items-center">
           <div className="min-w-[150px]">Backup weekday</div>
           <Select
-            value={backupInterval.weekday}
-            onChange={(v) => {
-              saveInterval({ weekday: v });
+            value={displayedWeekday}
+            onChange={(localWeekday) => {
+              if (!localWeekday) return;
+              const ref = localTime ?? dayjs();
+              saveInterval({ weekday: getUtcWeekday(localWeekday, ref) });
             }}
             size="small"
             className="max-w-[200px] grow"
             options={weekdayOptions}
-            placeholder="Select backup weekday"
           />
         </div>
       )}
@@ -180,13 +181,14 @@ export const EditDatabaseBaseInfoComponent = ({
           <InputNumber
             min={1}
             max={31}
-            value={backupInterval.dayOfMonth}
-            onChange={(v) => {
-              saveInterval({ dayOfMonth: v ?? 1 });
+            value={displayedDayOfMonth}
+            onChange={(localDom) => {
+              if (!localDom) return;
+              const ref = localTime ?? dayjs();
+              saveInterval({ dayOfMonth: getUtcDayOfMonth(localDom, ref) });
             }}
             size="small"
             className="max-w-[200px] grow"
-            placeholder="Select backup day of month"
           />
         </div>
       )}
@@ -198,15 +200,22 @@ export const EditDatabaseBaseInfoComponent = ({
             value={localTime}
             format={timeFormat.format}
             use12Hours={timeFormat.use12Hours}
-            onChange={(t) => {
-              if (!t) return;
-              // convert local picker value → UTC "HH:mm"
-              const utcString = t.utc().format('HH:mm');
-              saveInterval({ timeOfDay: utcString });
-            }}
             allowClear={false}
             size="small"
             className="max-w-[200px] grow"
+            onChange={(t) => {
+              if (!t) return;
+              const patch: Partial<Interval> = { timeOfDay: t.utc().format('HH:mm') };
+
+              if (backupInterval?.interval === IntervalType.WEEKLY && displayedWeekday) {
+                patch.weekday = getUtcWeekday(displayedWeekday, t);
+              }
+              if (backupInterval?.interval === IntervalType.MONTHLY && displayedDayOfMonth) {
+                patch.dayOfMonth = getUtcDayOfMonth(displayedDayOfMonth, t);
+              }
+
+              saveInterval(patch);
+            }}
           />
         </div>
       )}
@@ -215,9 +224,7 @@ export const EditDatabaseBaseInfoComponent = ({
         <div className="min-w-[150px]">Store period</div>
         <Select
           value={editingDatabase.storePeriod}
-          onChange={(v) => {
-            updateDatabase({ storePeriod: v });
-          }}
+          onChange={(v) => updateDatabase({ storePeriod: v })}
           size="small"
           className="max-w-[200px] grow"
           options={[
@@ -236,7 +243,7 @@ export const EditDatabaseBaseInfoComponent = ({
         />
         <Tooltip
           className="cursor-pointer"
-          title="How long to keep the backups? Make sure that you have enough space on the storage you are using (local, S3, Goole Drive, etc.)."
+          title="How long to keep the backups? Make sure you have enough storage space."
         >
           <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
         </Tooltip>
@@ -244,15 +251,14 @@ export const EditDatabaseBaseInfoComponent = ({
 
       <div className="mt-5 flex">
         {isShowCancelButton && (
-          <Button className="mr-1" danger ghost onClick={() => onCancel()}>
+          <Button danger ghost className="mr-1" onClick={onCancel}>
             Cancel
           </Button>
         )}
-
         <Button
-          className={`${isShowCancelButton ? 'ml-1' : 'ml-auto'} mr-5`}
           type="primary"
-          onClick={() => saveDatabase()}
+          className={`${isShowCancelButton ? 'ml-1' : 'ml-auto'} mr-5`}
+          onClick={saveDatabase}
           loading={isSaving}
           disabled={!isUnsaved || !isAllFieldsFilled}
         >
