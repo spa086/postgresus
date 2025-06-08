@@ -59,6 +59,10 @@ services:
     image: rostislavdugin/postgresus:latest
     ports:
       - "4005:4005"
+    depends_on:
+      postgresus-db:
+        condition: service_healthy
+    restart: unless-stopped
 
   postgresus-db:
     image: postgres:17
@@ -73,6 +77,12 @@ services:
     container_name: postgresus-db
     command: -p 5437
     shm_size: 10gb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgresus -d postgresus -p 5437"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 EOF
 log "docker-compose.yml created successfully"
 
