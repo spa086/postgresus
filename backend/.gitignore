@@ -10,3 +10,4 @@ swagger/docs.go
 swagger/swagger.json
 swagger/swagger.yaml
 postgresus-backend.exe
+ui/build/*

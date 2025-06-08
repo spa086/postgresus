@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
-
-	"net/http"
 
 	"postgresus-backend/internal/config"
 	"postgresus-backend/internal/downdetect"
@@ -51,30 +51,11 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	ginApp := gin.Default()
 
-	// Setup CORS
-	ginApp.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders: []string{
-			"Origin",
-			"Content-Length",
-			"Content-Type",
-			"Authorization",
-			"Accept",
-			"Accept-Language",
-			"Accept-Encoding",
-			"Access-Control-Request-Method",
-			"Access-Control-Request-Headers",
-			"Access-Control-Allow-Methods",
-			"Access-Control-Allow-Headers",
-			"Access-Control-Allow-Origin",
-		},
-		AllowCredentials: true,
-	}))
-
+	enableCors(ginApp)
 	setUpRoutes(ginApp)
 	setUpDependencies()
 	runBackgroundTasks(log)
+	mountFrontend(ginApp)
 
 	startServerWithGracefulShutdown(log, ginApp)
 }
@@ -171,6 +152,10 @@ func runWithPanicLogging(log *slog.Logger, serviceName string, fn func()) {
 // is generated into Go files. So if we changed files, we generate
 // new docs, but still need to restart the server to see them.
 func generateSwaggerDocs(log *slog.Logger) {
+	if config.GetEnv().EnvMode == env_utils.EnvModeProduction {
+		return
+	}
+
 	// Run swag from the current directory instead of parent
 	// Use the current directory as the base for swag init
 	// This ensures swag can find the files regardless of where the command is run from
@@ -211,4 +196,43 @@ func runMigrations(log *slog.Logger) {
 	}
 
 	log.Info("Database migrations completed successfully", "output", string(output))
+}
+
+func enableCors(ginApp *gin.Engine) {
+	if config.GetEnv().EnvMode == env_utils.EnvModeDevelopment {
+		// Setup CORS
+		ginApp.Use(cors.New(cors.Config{
+			AllowOrigins: []string{"*"},
+			AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+			AllowHeaders: []string{
+				"Origin",
+				"Content-Length",
+				"Content-Type",
+				"Authorization",
+				"Accept",
+				"Accept-Language",
+				"Accept-Encoding",
+				"Access-Control-Request-Method",
+				"Access-Control-Request-Headers",
+				"Access-Control-Allow-Methods",
+				"Access-Control-Allow-Headers",
+				"Access-Control-Allow-Origin",
+			},
+			AllowCredentials: true,
+		}))
+	}
+}
+
+func mountFrontend(ginApp *gin.Engine) {
+	staticDir := "./ui/build"
+	ginApp.NoRoute(func(c *gin.Context) {
+		path := filepath.Join(staticDir, c.Request.URL.Path)
+
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+			c.File(path)
+			return
+		}
+
+		c.File(filepath.Join(staticDir, "index.html"))
+	})
 }

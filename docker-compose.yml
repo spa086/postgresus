@@ -1,30 +1,21 @@
 version: "3"
 
 services:
-  postgresus-frontend:
+  postgresus:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "4006:4006"
-
-  postgresus-backend:
-    build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     ports:
       - "4005:4005"
-    volumes:
-      - ./postgresus-data:/postgresus-data
 
   postgresus-db:
-    env_file:
-      - .env
     image: postgres:17
+    # we use default values, but do not expose
+    # PostgreSQL ports so it is safe
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=postgresus
+      - POSTGRES_USER=postgresus
+      - POSTGRES_PASSWORD=postgresus
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     container_name: postgresus-db
