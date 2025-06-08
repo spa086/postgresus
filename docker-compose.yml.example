@@ -34,7 +34,7 @@ services:
     command: -p 5437
     shm_size: 10gb
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgresus -d postgresus -p 5437"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgresus -p 5437"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -80,7 +80,7 @@ services:
     command: -p 5437
     shm_size: 10gb
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgresus -d postgresus -p 5437"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgresus -p 5437"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -101,13 +101,13 @@ fi
 
 # Add cron job for system reboot
 log "Setting up cron job to start PostgresUS on system reboot..."
-CRON_JOB="@reboot cd $INSTALL_DIR && docker-compose up -d >> $INSTALL_DIR/postgresus-startup.log 2>&1"
+CRON_JOB="@reboot cd $INSTALL_DIR && docker compose up -d >> $INSTALL_DIR/postgresus-startup.log 2>&1"
 (crontab -l 2>/dev/null | grep -v "$INSTALL_DIR.*docker-compose"; echo "$CRON_JOB") | crontab -
 log "Cron job configured successfully"
 
-log "PostgresUS installation completed successfully!"
+log "Postgresus installation completed successfully!"
 log "-------------------------------------------"
 log "To launch immediately:"
 log "> cd $INSTALL_DIR && docker compose up -d"
 log "Or reboot system to auto-start via cron"
-log "Access PostgresUS at: http://localhost:4005"
+log "Access Postgresus at: http://localhost:4005"
