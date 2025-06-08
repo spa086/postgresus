@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 import { type Database, DatabaseType } from '../../../entity/databases';
 import { getStorageLogoFromType } from '../../../entity/storages';
-import { getUserTimeFormat } from '../../../shared/time';
+import { getUserShortTimeFormat } from '../../../shared/time/getUserTimeFormat';
 
 interface Props {
   database: Database;
@@ -51,9 +51,8 @@ export const DatabaseCardComponent = ({
         <div className="mt-3 mb-1 text-xs text-gray-500">
           <span className="font-bold">Last backup</span>
           <br />
-          {dayjs(database.lastBackupTime).format(getUserTimeFormat().format)}
-          <br />
-          {dayjs(database.lastBackupTime).fromNow()}
+          {dayjs(database.lastBackupTime).format(getUserShortTimeFormat().format)} (
+          {dayjs(database.lastBackupTime).fromNow()})
         </div>
       )}
 
