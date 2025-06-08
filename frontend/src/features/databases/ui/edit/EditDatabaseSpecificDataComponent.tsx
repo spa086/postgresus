@@ -236,7 +236,7 @@ export const EditDatabaseSpecificDataComponent = ({
 
                 setEditingDatabase({
                   ...editingDatabase,
-                  postgresql: { ...editingDatabase.postgresql, password: e.target.value },
+                  postgresql: { ...editingDatabase.postgresql, password: e.target.value.trim() },
                 });
                 setIsConnectionTested(false);
               }}
