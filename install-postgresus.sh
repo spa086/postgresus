@@ -59,6 +59,8 @@ services:
     image: rostislavdugin/postgresus:latest
     ports:
       - "4005:4005"
+    volumes:
+      - ./postgresus-data:/app/postgresus-data
     depends_on:
       postgresus-db:
         condition: service_healthy
@@ -70,8 +72,8 @@ services:
     # PostgreSQL ports so it is safe
     environment:
       - POSTGRES_DB=postgresus
-      - POSTGRES_USER=postgresus
-      - POSTGRES_PASSWORD=postgresus
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Q1234567
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     container_name: postgresus-db
@@ -106,6 +108,6 @@ log "Cron job configured successfully"
 log "PostgresUS installation completed successfully!"
 log "-------------------------------------------"
 log "To launch immediately:"
-log "> cd $INSTALL_DIR && docker-compose up -d"
+log "> cd $INSTALL_DIR && docker compose up -d"
 log "Or reboot system to auto-start via cron"
 log "Access PostgresUS at: http://localhost:4005"
