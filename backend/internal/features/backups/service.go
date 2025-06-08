@@ -296,8 +296,7 @@ func (s *BackupService) SendBackupNotification(
 			totalMs := backup.BackupDurationMs
 			minutes := totalMs / (1000 * 60)
 			seconds := (totalMs % (1000 * 60)) / 1000
-			milliseconds := totalMs % 1000
-			durationStr := fmt.Sprintf("%dm %ds %dms", minutes, seconds, milliseconds)
+			durationStr := fmt.Sprintf("%dm %ds", minutes, seconds)
 
 			message = fmt.Sprintf(
 				"Backup completed successfully in %s.\nCompressed backup size: %s",
