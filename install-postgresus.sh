@@ -88,26 +88,14 @@ services:
 EOF
 log "docker-compose.yml created successfully"
 
-# Install cron if not installed
-if ! command -v cron &> /dev/null; then
-    log "Cron not found. Installing cron..."
-    apt-get update
-    apt-get install -y cron
-    systemctl enable cron
-    log "Cron installed successfully"
-else
-    log "Cron already installed"
-fi
-
-# Add cron job for system reboot
-log "Setting up cron job to start PostgresUS on system reboot..."
-CRON_JOB="@reboot cd $INSTALL_DIR && docker compose up -d >> $INSTALL_DIR/postgresus-startup.log 2>&1"
-(crontab -l 2>/dev/null | grep -v "$INSTALL_DIR.*docker-compose"; echo "$CRON_JOB") | crontab -
-log "Cron job configured successfully"
+# Start PostgresUS
+log "Starting PostgresUS..."
+cd "$INSTALL_DIR"
+docker compose up -d
+log "PostgresUS started successfully"
 
 log "Postgresus installation completed successfully!"
 log "-------------------------------------------"
-log "To launch immediately:"
+log "To launch:"
 log "> cd $INSTALL_DIR && docker compose up -d"
-log "Or reboot system to auto-start via cron"
 log "Access Postgresus at: http://localhost:4005"
