@@ -28,6 +28,8 @@ services:
     image: rostislavdugin/postgresus:latest
     ports:
       - "4005:4005"
+    volumes:
+      - ./postgresus-data:/app/postgresus-data
     depends_on:
       postgresus-db:
         condition: service_healthy
@@ -43,7 +45,6 @@ services:
       - POSTGRES_PASSWORD=Q1234567
     volumes:
       - ./pgdata:/var/lib/postgresql/data
-      - ./postgresus-data:/app/postgresus-data
     container_name: postgresus-db
     command: -p 5437
     shm_size: 10gb
