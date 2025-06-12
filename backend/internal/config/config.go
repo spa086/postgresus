@@ -48,23 +48,23 @@ func loadEnvVariables() {
 		cwd = "."
 	}
 
-	projectRoot := cwd
+	backendRoot := cwd
 	for {
-		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+		if _, err := os.Stat(filepath.Join(backendRoot, "go.mod")); err == nil {
 			break
 		}
 
-		parent := filepath.Dir(projectRoot)
-		if parent == projectRoot {
+		parent := filepath.Dir(backendRoot)
+		if parent == backendRoot {
 			break
 		}
 
-		projectRoot = parent
+		backendRoot = parent
 	}
 
 	envPaths := []string{
 		filepath.Join(cwd, ".env"),
-		filepath.Join(projectRoot, ".env"),
+		filepath.Join(backendRoot, ".env"),
 	}
 
 	var loaded bool
@@ -110,11 +110,13 @@ func loadEnvVariables() {
 	}
 	log.Info("ENV_MODE loaded", "mode", env.EnvMode)
 
-	env.PostgresesInstallDir = "./tools/postgresql"
+	env.PostgresesInstallDir = filepath.Join(backendRoot, "tools", "postgresql")
 	tools.VerifyPostgresesInstallation(env.EnvMode, env.PostgresesInstallDir)
 
-	env.DataFolder = "../postgresus-data/data"
-	env.TempFolder = "../postgresus-data/temp"
+	// Store the data and temp folders one level below the root
+	// (projectRoot/postgresus-data -> /postgresus-data)
+	env.DataFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "data")
+	env.TempFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "temp")
 
 	log.Info("Environment variables loaded successfully!")
 }
