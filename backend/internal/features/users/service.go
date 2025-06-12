@@ -70,29 +70,7 @@ func (s *UserService) SignIn(request *SignInRequest) (*SignInResponse, error) {
 		return nil, errors.New("password is incorrect")
 	}
 
-	secretKey, err := s.secretKeyRepository.GetSecretKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get secret key: %w", err)
-	}
-
-	tenYearsExpiration := time.Now().UTC().Add(time.Hour * 24 * 365 * 10)
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  user.ID,
-		"exp":  tenYearsExpiration.Unix(),
-		"iat":  time.Now().UTC().Unix(),
-		"role": string(user.Role),
-	})
-
-	tokenString, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	return &SignInResponse{
-		UserID: user.ID,
-		Token:  tokenString,
-	}, nil
+	return s.GenerateAccessToken(user)
 }
 
 func (s *UserService) GetUserFromToken(token string) (*user_models.User, error) {
@@ -150,4 +128,34 @@ func (s *UserService) ChangePassword(newPassword string) error {
 	}
 
 	return nil
+}
+
+func (s *UserService) GetFirstUser() (*user_models.User, error) {
+	return s.userRepository.GetFirstUser()
+}
+
+func (s *UserService) GenerateAccessToken(user *user_models.User) (*SignInResponse, error) {
+	secretKey, err := s.secretKeyRepository.GetSecretKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get secret key: %w", err)
+	}
+
+	tenYearsExpiration := time.Now().UTC().Add(time.Hour * 24 * 365 * 10)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":  user.ID,
+		"exp":  tenYearsExpiration.Unix(),
+		"iat":  time.Now().UTC().Unix(),
+		"role": string(user.Role),
+	})
+
+	tokenString, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return &SignInResponse{
+		UserID: user.ID,
+		Token:  tokenString,
+	}, nil
 }

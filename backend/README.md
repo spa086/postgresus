@@ -16,6 +16,10 @@ To run:
 
 > go run /cmd/main.go
 
+To run tests:
+
+> go test ./internal/... 
+
 Before commit (make sure `golangci-lint` is installed):
 
 > golangci-lint fmt
