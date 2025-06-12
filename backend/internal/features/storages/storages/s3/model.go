@@ -61,7 +61,6 @@ func (s *S3Storage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	// Get the object using MinIO client
 	object, err := client.GetObject(
 		context.TODO(),
 		s.S3Bucket,
@@ -70,6 +69,21 @@ func (s *S3Storage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file from S3: %w", err)
+	}
+
+	// Check if the file actually exists by reading the first byte
+	buf := make([]byte, 1)
+	_, readErr := object.Read(buf)
+	if readErr != nil && readErr != io.EOF {
+		_ = object.Close()
+		return nil, fmt.Errorf("file does not exist in S3: %w", readErr)
+	}
+
+	// Reset the reader to the beginning
+	_, seekErr := object.Seek(0, io.SeekStart)
+	if seekErr != nil {
+		_ = object.Close()
+		return nil, fmt.Errorf("failed to reset file reader: %w", seekErr)
 	}
 
 	return object, nil

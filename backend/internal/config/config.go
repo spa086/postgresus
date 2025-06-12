@@ -28,8 +28,6 @@ type EnvVariables struct {
 
 	DataFolder string
 	TempFolder string
-
-	TestFilePath string
 }
 
 var (
@@ -119,8 +117,6 @@ func loadEnvVariables() {
 	// (projectRoot/postgresus-data -> /postgresus-data)
 	env.DataFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "data")
 	env.TempFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "temp")
-
-	env.TestFilePath = filepath.Join(backendRoot, "assets", "file_for_storage_text.txt")
 
 	log.Info("Environment variables loaded successfully!")
 }
