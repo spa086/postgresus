@@ -1,5 +1,7 @@
 package tools
 
+import "fmt"
+
 type PostgresqlVersion string
 
 const (
@@ -16,3 +18,20 @@ const (
 	PostgresqlExecutablePgDump PostgresqlExecutable = "pg_dump"
 	PostgresqlExecutablePsql   PostgresqlExecutable = "psql"
 )
+
+func GetPostgresqlVersionEnum(version string) PostgresqlVersion {
+	switch version {
+	case "13":
+		return PostgresqlVersion13
+	case "14":
+		return PostgresqlVersion14
+	case "15":
+		return PostgresqlVersion15
+	case "16":
+		return PostgresqlVersion16
+	case "17":
+		return PostgresqlVersion17
+	default:
+		panic(fmt.Sprintf("invalid postgresql version: %s", version))
+	}
+}

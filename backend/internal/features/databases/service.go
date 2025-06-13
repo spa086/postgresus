@@ -2,7 +2,6 @@ package databases
 
 import (
 	"errors"
-	"fmt"
 	users_models "postgresus-backend/internal/features/users/models"
 	"time"
 
@@ -60,12 +59,11 @@ func (s *DatabaseService) UpdateDatabase(
 	}
 
 	if existingDatabase.Storage.ID != database.Storage.ID {
-		fmt.Println("OnBeforeDbStorageChange")
-
 		err := s.dbStorageChangeListener.OnBeforeDbStorageChange(
 			existingDatabase.ID,
 			database.StorageID,
 		)
+
 		if err != nil {
 			return err
 		}

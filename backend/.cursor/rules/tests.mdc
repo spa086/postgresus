@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Write tests names in the format:
+
+Test_WhatWeDo_WhatWeExpect
+
+Example:
+- Test_TestConnection_ConnectionSucceeds
+- Test_SaveNewStorage_StorageReturnedViaGet

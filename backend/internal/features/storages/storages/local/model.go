@@ -102,6 +102,7 @@ func (l *LocalStorage) SaveFile(fileID uuid.UUID, file io.Reader) error {
 		"finalPath",
 		finalPath,
 	)
+
 	return nil
 }
 

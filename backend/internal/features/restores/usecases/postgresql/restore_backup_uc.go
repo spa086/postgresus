@@ -31,7 +31,7 @@ func (uc *RestorePostgresqlBackupUsecase) Execute(
 	restore models.Restore,
 	backup *backups.Backup,
 ) error {
-	if restore.Backup.Database.Type != databases.DatabaseTypePostgres {
+	if backup.Database.Type != databases.DatabaseTypePostgres {
 		return errors.New("database type not supported")
 	}
 
