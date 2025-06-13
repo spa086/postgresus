@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if script is run as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Error: This script must be run as root (sudo ./install-postgresus.sh)" >&2
+    exit 1
+fi
+
 # Set up logging
 LOG_FILE="/var/log/postgresus-install.log"
 INSTALL_DIR="/opt/postgresus"

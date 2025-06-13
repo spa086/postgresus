@@ -64,8 +64,9 @@ The installation script will:
 - ✅ Set up automatic startup on system reboot via cron
 
 ```bash
-apt-get install -y curl && \
-curl -sSL https://raw.githubusercontent.com/RostislavDugin/postgresus/refs/heads/main/install-postgresus.sh | bash
+sudo apt-get install -y curl && \
+sudo curl -sSL https://raw.githubusercontent.com/RostislavDugin/postgresus/refs/heads/main/install-postgresus.sh \
+| sudo bash
 ```
 
 ### Option 2: Manual Docker Compose Setup
