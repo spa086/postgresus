@@ -62,6 +62,7 @@ version: "3"
 
 services:
   postgresus:
+    container_name: postgresus
     image: rostislavdugin/postgresus:latest
     ports:
       - "4005:4005"
@@ -73,6 +74,7 @@ services:
     restart: unless-stopped
 
   postgresus-db:
+    container_name: postgresus-db
     image: postgres:17
     # we use default values, but do not expose
     # PostgreSQL ports so it is safe
@@ -82,7 +84,6 @@ services:
       - POSTGRES_PASSWORD=Q1234567
     volumes:
       - ./pgdata:/var/lib/postgresql/data
-    container_name: postgresus-db
     command: -p 5437
     shm_size: 10gb
     healthcheck:

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -19,7 +20,6 @@ import (
 	"postgresus-backend/internal/features/restores"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/features/users"
-	"postgresus-backend/internal/storage"
 	env_utils "postgresus-backend/internal/util/env"
 	files_utils "postgresus-backend/internal/util/files"
 	"postgresus-backend/internal/util/logger"
@@ -44,9 +44,14 @@ func main() {
 
 	runMigrations(log)
 
-	go generateSwaggerDocs(log)
+	// Handle password reset if flag is provided
+	newPassword := flag.String("new-password", "", "Set a new password for the user")
+	flag.Parse()
+	if *newPassword != "" {
+		resetPassword(*newPassword, log)
+	}
 
-	_ = storage.GetDb()
+	go generateSwaggerDocs(log)
 
 	gin.SetMode(gin.ReleaseMode)
 	ginApp := gin.Default()
@@ -58,6 +63,20 @@ func main() {
 	mountFrontend(ginApp)
 
 	startServerWithGracefulShutdown(log, ginApp)
+}
+
+func resetPassword(newPassword string, log *slog.Logger) {
+	log.Info("Resetting password...")
+
+	userService := users.GetUserService()
+	err := userService.ChangePassword(newPassword)
+	if err != nil {
+		log.Error("Failed to reset password", "error", err)
+		os.Exit(1)
+	}
+
+	log.Info("Password reset successfully")
+	os.Exit(0)
 }
 
 func startServerWithGracefulShutdown(log *slog.Logger, app *gin.Engine) {

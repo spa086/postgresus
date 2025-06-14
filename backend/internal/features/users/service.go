@@ -101,6 +101,19 @@ func (s *UserService) GetUserFromToken(token string) (*user_models.User, error) 
 			return nil, err
 		}
 
+		if passwordCreationTimeUnix, ok := claims["passwordCreationTime"].(float64); ok {
+			tokenPasswordTime := time.Unix(int64(passwordCreationTimeUnix), 0)
+
+			tokenTimeSeconds := tokenPasswordTime.Truncate(time.Second)
+			userTimeSeconds := user.PasswordCreationTime.Truncate(time.Second)
+
+			if !tokenTimeSeconds.Equal(userTimeSeconds) {
+				return nil, errors.New("password has been changed, please sign in again")
+			}
+		} else {
+			return nil, errors.New("invalid token claims: missing password creation time")
+		}
+
 		return user, nil
 	}
 
@@ -143,10 +156,11 @@ func (s *UserService) GenerateAccessToken(user *user_models.User) (*SignInRespon
 	tenYearsExpiration := time.Now().UTC().Add(time.Hour * 24 * 365 * 10)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  user.ID,
-		"exp":  tenYearsExpiration.Unix(),
-		"iat":  time.Now().UTC().Unix(),
-		"role": string(user.Role),
+		"sub":                  user.ID,
+		"exp":                  tenYearsExpiration.Unix(),
+		"iat":                  time.Now().UTC().Unix(),
+		"role":                 string(user.Role),
+		"passwordCreationTime": user.PasswordCreationTime.Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(secretKey))

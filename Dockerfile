@@ -97,4 +97,5 @@ RUN if [ ! -f /app/.env ]; then \
 
 EXPOSE 4005
 
-CMD ["./main"]
+ENTRYPOINT ["./main"]
+CMD []
