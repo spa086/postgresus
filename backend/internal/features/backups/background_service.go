@@ -11,11 +11,15 @@ type BackupBackgroundService struct {
 	backupService    *BackupService
 	backupRepository *BackupRepository
 	databaseService  *databases.DatabaseService
+
+	lastBackupTime time.Time
 }
 
 var log = logger.GetLogger()
 
 func (s *BackupBackgroundService) Run() {
+	s.lastBackupTime = time.Now().UTC()
+
 	if err := s.failBackupsInProgress(); err != nil {
 		log.Error("Failed to fail backups in progress", "error", err)
 		panic(err)
@@ -38,8 +42,14 @@ func (s *BackupBackgroundService) Run() {
 			log.Error("Failed to run pending backups", "error", err)
 		}
 
+		s.lastBackupTime = time.Now().UTC()
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func (s *BackupBackgroundService) IsBackupsRunning() bool {
+	// if last backup time is more than 5 minutes ago, return false
+	return s.lastBackupTime.After(time.Now().UTC().Add(-5 * time.Minute))
 }
 
 func (s *BackupBackgroundService) failBackupsInProgress() error {

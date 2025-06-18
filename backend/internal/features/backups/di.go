@@ -7,6 +7,7 @@ import (
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/features/users"
+	"time"
 )
 
 var createPostgresqlBackupUsecase = &usecases_postgresql.CreatePostgresqlBackupUsecase{}
@@ -26,6 +27,7 @@ var backupBackgroundService = &BackupBackgroundService{
 	backupService,
 	backupRepository,
 	databases.GetDatabaseService(),
+	time.Now().UTC(),
 }
 
 var backupController = &BackupController{

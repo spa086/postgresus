@@ -1,20 +1,16 @@
 package healthcheck
 
-import "postgresus-backend/internal/features/disk"
-
-var (
-	healthcheckService    *HealthcheckService
-	healthcheckController *HealthcheckController
+import (
+	"postgresus-backend/internal/features/backups"
+	"postgresus-backend/internal/features/disk"
 )
 
-func init() {
-	healthcheckService = &HealthcheckService{
-		disk.GetDiskService(),
-	}
-
-	healthcheckController = &HealthcheckController{
-		healthcheckService,
-	}
+var healthcheckService = &HealthcheckService{
+	disk.GetDiskService(),
+	backups.GetBackupBackgroundService(),
+}
+var healthcheckController = &HealthcheckController{
+	healthcheckService,
 }
 
 func GetHealthcheckController() *HealthcheckController {

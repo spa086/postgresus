@@ -2,12 +2,14 @@ package healthcheck
 
 import (
 	"errors"
+	"postgresus-backend/internal/features/backups"
 	"postgresus-backend/internal/features/disk"
 	"postgresus-backend/internal/storage"
 )
 
 type HealthcheckService struct {
-	diskService *disk.DiskService
+	diskService             *disk.DiskService
+	backupBackgroundService *backups.BackupBackgroundService
 }
 
 func (s *HealthcheckService) IsHealthy() error {
@@ -25,6 +27,10 @@ func (s *HealthcheckService) IsHealthy() error {
 
 	if err != nil {
 		return errors.New("cannot connect to the database")
+	}
+
+	if !s.backupBackgroundService.IsBackupsRunning() {
+		return errors.New("backups are not running for more than 5 minutes")
 	}
 
 	return nil
