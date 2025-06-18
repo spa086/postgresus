@@ -6,6 +6,8 @@ export const getNotifierNameFromType = (type: NotifierType) => {
       return 'Email';
     case NotifierType.TELEGRAM:
       return 'Telegram';
+    case NotifierType.WEBHOOK:
+      return 'Webhook';
     default:
       return '';
   }

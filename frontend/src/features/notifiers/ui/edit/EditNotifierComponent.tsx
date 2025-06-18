@@ -1,10 +1,17 @@
 import { Button, Input, Select } from 'antd';
 import { useEffect, useState } from 'react';
 
-import { type Notifier, NotifierType, notifierApi } from '../../../../entity/notifiers';
+import {
+  type Notifier,
+  NotifierType,
+  WebhookMethod,
+  notifierApi,
+} from '../../../../entity/notifiers';
+import { getNotifierLogoFromType } from '../../../../entity/notifiers/models/getNotifierLogoFromType';
 import { ToastHelper } from '../../../../shared/toast';
 import { EditEmailNotifierComponent } from './notifiers/EditEmailNotifierComponent';
 import { EditTelegramNotifierComponent } from './notifiers/EditTelegramNotifierComponent';
+import { EditWebhookNotifierComponent } from './notifiers/EditWebhookNotifierComponent';
 
 interface Props {
   isShowClose: boolean;
@@ -88,6 +95,13 @@ export function EditNotifierComponent({
       };
     }
 
+    if (type === NotifierType.WEBHOOK) {
+      notifier.webhookNotifier = {
+        webhookUrl: '',
+        webhookMethod: WebhookMethod.POST,
+      };
+    }
+
     setNotifier(
       JSON.parse(
         JSON.stringify({
@@ -134,6 +148,10 @@ export function EditNotifierComponent({
       );
     }
 
+    if (notifier.notifierType === NotifierType.WEBHOOK) {
+      return notifier.webhookNotifier?.webhookUrl;
+    }
+
     return false;
   };
 
@@ -166,6 +184,7 @@ export function EditNotifierComponent({
           options={[
             { label: 'Telegram', value: NotifierType.TELEGRAM },
             { label: 'Email', value: NotifierType.EMAIL },
+            { label: 'Webhook', value: NotifierType.WEBHOOK },
           ]}
           onChange={(value) => {
             setNotifierType(value);
@@ -175,13 +194,7 @@ export function EditNotifierComponent({
           className="w-full max-w-[250px]"
         />
 
-        {notifier?.notifierType === NotifierType.TELEGRAM && (
-          <img src="/icons/notifiers/telegram.svg" className="ml-2 h-4 w-4" />
-        )}
-
-        {notifier?.notifierType === NotifierType.EMAIL && (
-          <img src="/icons/notifiers/email.svg" className="ml-2 h-4 w-4" />
-        )}
+        <img src={getNotifierLogoFromType(notifier?.notifierType)} className="ml-2 h-4 w-4" />
       </div>
 
       <div className="mt-5" />
@@ -197,6 +210,14 @@ export function EditNotifierComponent({
 
         {notifier?.notifierType === NotifierType.EMAIL && (
           <EditEmailNotifierComponent
+            notifier={notifier}
+            setNotifier={setNotifier}
+            setIsUnsaved={setIsUnsaved}
+          />
+        )}
+
+        {notifier?.notifierType === NotifierType.WEBHOOK && (
+          <EditWebhookNotifierComponent
             notifier={notifier}
             setNotifier={setNotifier}
             setIsUnsaved={setIsUnsaved}
