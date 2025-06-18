@@ -1,19 +1,36 @@
-import { useState } from 'react';
+import { Tooltip } from 'antd';
+import { useEffect, useState } from 'react';
+import GitHubButton from 'react-github-btn';
 
+import { getApplicationServer } from '../../constants';
+import { type DiskUsage, diskApi } from '../../entity/disk';
 import { DatabasesComponent } from '../../features/databases/ui/DatabasesComponent';
 import { NotifiersComponent } from '../../features/notifiers/ui/NotifiersComponent';
 import { StoragesComponent } from '../../features/storages/StoragesComponent';
 import { useScreenHeight } from '../../shared/hooks';
-import GitHubButton from 'react-github-btn';
 
 export const MainScreenComponent = () => {
   const screenHeight = useScreenHeight();
+  const contentHeight = screenHeight - 95;
 
   const [selectedTab, setSelectedTab] = useState<'notifiers' | 'storages' | 'databases'>(
     'databases',
   );
+  const [diskUsage, setDiskUsage] = useState<DiskUsage | undefined>(undefined);
 
-  const contentHeight = screenHeight - 95;
+  useEffect(() => {
+    diskApi
+      .getDiskUsage()
+      .then((diskUsage) => {
+        setDiskUsage(diskUsage);
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
+  }, []);
+
+  const isUsedMoreThan95Percent =
+    diskUsage && diskUsage.usedSpaceBytes / diskUsage.totalSpaceBytes > 0.95;
 
   return (
     <div style={{ height: screenHeight }} className="bg-[#f5f5f5] p-3">
@@ -39,6 +56,15 @@ export const MainScreenComponent = () => {
         <div className="mr-3 ml-auto flex items-center gap-5">
           <a
             className="hover:opacity-80"
+            href={`${getApplicationServer()}/api/v1/health`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Healthcheck
+          </a>
+
+          <a
+            className="hover:opacity-80"
             href="https://t.me/postgresus_community"
             target="_blank"
             rel="noreferrer"
@@ -57,6 +83,20 @@ export const MainScreenComponent = () => {
               &nbsp;Star on GitHub
             </GitHubButton>
           </div>
+
+          {diskUsage && (
+            <Tooltip title="To make backups locally and restore them, you need to have enough space on your disk. For restore, you need to have same amount of space that the backup size.">
+              <div
+                className={`cursor-pointer text-center text-xs ${isUsedMoreThan95Percent ? 'text-red-500' : 'text-gray-500'}`}
+              >
+                {(diskUsage.usedSpaceBytes / 1024 ** 3).toFixed(1)} of{' '}
+                {(diskUsage.totalSpaceBytes / 1024 ** 3).toFixed(1)} GB
+                <br />
+                ROM used (
+                {((diskUsage.usedSpaceBytes / diskUsage.totalSpaceBytes) * 100).toFixed(1)}%)
+              </div>
+            </Tooltip>
+          )}
         </div>
       </div>
       {/* ===================== END NAVBAR ===================== */}

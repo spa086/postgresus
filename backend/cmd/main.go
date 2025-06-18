@@ -16,6 +16,8 @@ import (
 	"postgresus-backend/internal/downdetect"
 	"postgresus-backend/internal/features/backups"
 	"postgresus-backend/internal/features/databases"
+	"postgresus-backend/internal/features/disk"
+	"postgresus-backend/internal/features/healthcheck"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/restores"
 	"postgresus-backend/internal/features/storages"
@@ -127,6 +129,8 @@ func setUpRoutes(r *gin.Engine) {
 	databaseController := databases.GetDatabaseController()
 	backupController := backups.GetBackupController()
 	restoreController := restores.GetRestoreController()
+	healthcheckController := healthcheck.GetHealthcheckController()
+	diskController := disk.GetDiskController()
 
 	downdetectContoller.RegisterRoutes(v1)
 	userController.RegisterRoutes(v1)
@@ -135,6 +139,8 @@ func setUpRoutes(r *gin.Engine) {
 	databaseController.RegisterRoutes(v1)
 	backupController.RegisterRoutes(v1)
 	restoreController.RegisterRoutes(v1)
+	healthcheckController.RegisterRoutes(v1)
+	diskController.RegisterRoutes(v1)
 }
 
 func setUpDependencies() {

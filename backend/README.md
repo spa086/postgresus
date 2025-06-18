@@ -49,7 +49,7 @@ To generate swagger docs:
 
 Swagger URL is:
 
-> http://localhost:8080/api/v1/docs/swagger/index.html#/
+> http://localhost:4005/api/v1/docs/swagger/index.html#/
 
 # Project structure
 
