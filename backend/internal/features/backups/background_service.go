@@ -3,6 +3,7 @@ package backups
 import (
 	"postgresus-backend/internal/config"
 	"postgresus-backend/internal/features/databases"
+	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/util/logger"
 	"time"
 )
@@ -11,6 +12,7 @@ type BackupBackgroundService struct {
 	backupService    *BackupService
 	backupRepository *BackupRepository
 	databaseService  *databases.DatabaseService
+	storageService   *storages.StorageService
 
 	lastBackupTime time.Time
 }
@@ -111,7 +113,19 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 		}
 
 		for _, backup := range oldBackups {
-			backup.DeleteBackupFromStorage()
+			storage, err := s.storageService.GetStorageByID(backup.StorageID)
+			if err != nil {
+				log.Error(
+					"Failed to get storage by ID",
+					"storageId",
+					backup.StorageID,
+					"error",
+					err,
+				)
+				continue
+			}
+
+			storage.DeleteFile(backup.ID)
 
 			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {
 				log.Error("Failed to delete old backup", "backupId", backup.ID, "error", err)

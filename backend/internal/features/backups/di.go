@@ -27,6 +27,7 @@ var backupBackgroundService = &BackupBackgroundService{
 	backupService,
 	backupRepository,
 	databases.GetDatabaseService(),
+	storages.GetStorageService(),
 	time.Now().UTC(),
 }
 

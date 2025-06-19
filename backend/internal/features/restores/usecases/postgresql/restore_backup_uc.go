@@ -17,6 +17,7 @@ import (
 	"postgresus-backend/internal/features/databases"
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/restores/models"
+	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/util/logger"
 	"postgresus-backend/internal/util/tools"
 
@@ -30,6 +31,7 @@ type RestorePostgresqlBackupUsecase struct{}
 func (uc *RestorePostgresqlBackupUsecase) Execute(
 	restore models.Restore,
 	backup *backups.Backup,
+	storage *storages.Storage,
 ) error {
 	if backup.Database.Type != databases.DatabaseTypePostgres {
 		return errors.New("database type not supported")
@@ -80,6 +82,7 @@ func (uc *RestorePostgresqlBackupUsecase) Execute(
 		args,
 		pg.Password,
 		backup,
+		storage,
 		pg,
 	)
 }
@@ -90,6 +93,7 @@ func (uc *RestorePostgresqlBackupUsecase) restoreFromStorage(
 	args []string,
 	password string,
 	backup *backups.Backup,
+	storage *storages.Storage,
 	pgConfig *pgtypes.PostgresqlDatabase,
 ) error {
 	log.Info(
@@ -148,7 +152,7 @@ func (uc *RestorePostgresqlBackupUsecase) restoreFromStorage(
 	}
 
 	// Download backup to temporary file
-	tempBackupFile, cleanupFunc, err := uc.downloadBackupToTempFile(ctx, backup)
+	tempBackupFile, cleanupFunc, err := uc.downloadBackupToTempFile(ctx, backup, storage)
 	if err != nil {
 		return fmt.Errorf("failed to download backup to temporary file: %w", err)
 	}
@@ -164,6 +168,7 @@ func (uc *RestorePostgresqlBackupUsecase) restoreFromStorage(
 func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 	ctx context.Context,
 	backup *backups.Backup,
+	storage *storages.Storage,
 ) (string, func(), error) {
 	// Create temporary directory for backup data
 	tempDir, err := os.MkdirTemp(config.GetEnv().TempFolder, "restore_"+uuid.New().String())
@@ -185,7 +190,7 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 		"tempFile",
 		tempBackupFile,
 	)
-	backupReader, err := backup.Storage.GetFile(backup.ID)
+	backupReader, err := storage.GetFile(backup.ID)
 	if err != nil {
 		cleanupFunc()
 		return "", nil, fmt.Errorf("failed to get backup file from storage: %w", err)

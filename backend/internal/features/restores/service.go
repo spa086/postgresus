@@ -7,6 +7,7 @@ import (
 	"postgresus-backend/internal/features/restores/enums"
 	"postgresus-backend/internal/features/restores/models"
 	"postgresus-backend/internal/features/restores/usecases"
+	"postgresus-backend/internal/features/storages"
 	users_models "postgresus-backend/internal/features/users/models"
 	"time"
 
@@ -14,9 +15,9 @@ import (
 )
 
 type RestoreService struct {
-	backupService     *backups.BackupService
-	restoreRepository *RestoreRepository
-
+	backupService        *backups.BackupService
+	restoreRepository    *RestoreRepository
+	storageService       *storages.StorageService
 	restoreBackupUsecase *usecases.RestoreBackupUsecase
 }
 
@@ -102,11 +103,17 @@ func (s *RestoreService) RestoreBackup(
 		}
 	}
 
+	storage, err := s.storageService.GetStorageByID(backup.StorageID)
+	if err != nil {
+		return err
+	}
+
 	start := time.Now().UTC()
 
-	err := s.restoreBackupUsecase.Execute(
+	err = s.restoreBackupUsecase.Execute(
 		restore,
 		backup,
+		storage,
 	)
 	if err != nil {
 		errMsg := err.Error()

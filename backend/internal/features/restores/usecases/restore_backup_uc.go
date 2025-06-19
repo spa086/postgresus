@@ -6,6 +6,7 @@ import (
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/restores/models"
 	usecases_postgresql "postgresus-backend/internal/features/restores/usecases/postgresql"
+	"postgresus-backend/internal/features/storages"
 )
 
 type RestoreBackupUsecase struct {
@@ -15,9 +16,10 @@ type RestoreBackupUsecase struct {
 func (uc *RestoreBackupUsecase) Execute(
 	restore models.Restore,
 	backup *backups.Backup,
+	storage *storages.Storage,
 ) error {
 	if restore.Backup.Database.Type == databases.DatabaseTypePostgres {
-		return uc.RestorePostgresqlBackupUsecase.Execute(restore, backup)
+		return uc.RestorePostgresqlBackupUsecase.Execute(restore, backup, storage)
 	}
 
 	return errors.New("database type not supported")

@@ -174,7 +174,7 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string) {
 
 	// Restore the backup
 	restoreBackupUC := &usecases_postgresql_restore.RestorePostgresqlBackupUsecase{}
-	err = restoreBackupUC.Execute(restore, completedBackup)
+	err = restoreBackupUC.Execute(restore, completedBackup, storage)
 	assert.NoError(t, err)
 
 	// Verify restored table exists
