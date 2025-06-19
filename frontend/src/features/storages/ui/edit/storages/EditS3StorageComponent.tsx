@@ -12,6 +12,16 @@ interface Props {
 export function EditS3StorageComponent({ storage, setStorage, setIsUnsaved }: Props) {
   return (
     <>
+      <div className="mb-2 flex items-center">
+        <div className="min-w-[110px]" />
+
+        <div className="text-xs text-blue-600">
+          <a href="https://postgresus.com/cloudflare-r2-storage" target="_blank" rel="noreferrer">
+            How to use with Cloudflare R2?
+          </a>
+        </div>
+      </div>
+
       <div className="mb-1 flex items-center">
         <div className="min-w-[110px]">S3 Bucket</div>
         <Input

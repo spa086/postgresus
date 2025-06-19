@@ -82,6 +82,7 @@ func (r *StorageRepository) FindByUserID(userID uuid.UUID) ([]*Storage, error) {
 		Preload("LocalStorage").
 		Preload("S3Storage").
 		Where("user_id = ?", userID).
+		Order("name ASC").
 		Find(&storages).Error; err != nil {
 		return nil, err
 	}

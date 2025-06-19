@@ -28,7 +28,7 @@
 ### 🗄️ **Multiple Storage Destinations**
 
 - **Local storage**: Keep backups on your VPS/server
-- **Cloud storage**: S3, Google Drive, Dropbox, and more (coming soon)
+- **Cloud storage**: S3, Cloudflare R2, Google Drive, Dropbox, and more (coming soon)
 - **Secure**: All data stays under your control
 
 ### 📱 **Smart Notifications**

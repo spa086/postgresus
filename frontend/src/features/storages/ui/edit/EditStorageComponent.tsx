@@ -120,7 +120,6 @@ export function EditStorageComponent({
     if (storage.type === StorageType.S3) {
       return (
         storage.s3Storage?.s3Bucket &&
-        storage.s3Storage?.s3Region &&
         storage.s3Storage?.s3AccessKey &&
         storage.s3Storage?.s3SecretKey
       );

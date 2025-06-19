@@ -113,9 +113,6 @@ func (s *S3Storage) Validate() error {
 	if s.S3Bucket == "" {
 		return errors.New("S3 bucket is required")
 	}
-	if s.S3Region == "" {
-		return errors.New("S3 region is required")
-	}
 	if s.S3AccessKey == "" {
 		return errors.New("S3 access key is required")
 	}
