@@ -2,25 +2,22 @@ package backups
 
 import (
 	"postgresus-backend/internal/features/backups/usecases"
-	usecases_postgresql "postgresus-backend/internal/features/backups/usecases/postgresql"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/features/users"
+	"postgresus-backend/internal/util/logger"
 	"time"
 )
 
-var createPostgresqlBackupUsecase = &usecases_postgresql.CreatePostgresqlBackupUsecase{}
-var createBackupUseCase = &usecases.CreateBackupUsecase{
-	CreatePostgresqlBackupUsecase: createPostgresqlBackupUsecase,
-}
 var backupRepository = &BackupRepository{}
 var backupService = &BackupService{
 	databases.GetDatabaseService(),
 	storages.GetStorageService(),
 	backupRepository,
 	notifiers.GetNotifierService(),
-	createBackupUseCase,
+	usecases.GetCreateBackupUsecase(),
+	logger.GetLogger(),
 }
 
 var backupBackgroundService = &BackupBackgroundService{
@@ -29,6 +26,7 @@ var backupBackgroundService = &BackupBackgroundService{
 	databases.GetDatabaseService(),
 	storages.GetStorageService(),
 	time.Now().UTC(),
+	logger.GetLogger(),
 }
 
 var backupController = &BackupController{

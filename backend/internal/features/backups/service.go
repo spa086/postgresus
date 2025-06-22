@@ -3,6 +3,7 @@ package backups
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"postgresus-backend/internal/features/backups/usecases"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
@@ -21,6 +22,8 @@ type BackupService struct {
 	notifierService  *notifiers.NotifierService
 
 	createBackupUseCase *usecases.CreateBackupUsecase
+
+	logger *slog.Logger
 }
 
 func (s *BackupService) OnBeforeDbStorageChange(
@@ -53,7 +56,7 @@ func (s *BackupService) OnBeforeDbStorageChange(
 			if err := backup.Storage.DeleteFile(backup.ID); err != nil {
 				// most likely we cannot do nothing with this,
 				// so we just remove the backup model
-				log.Error("Failed to delete backup file", "error", err)
+				s.logger.Error("Failed to delete backup file", "error", err)
 			}
 
 			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {
@@ -125,7 +128,7 @@ func (s *BackupService) DeleteBackup(
 		return errors.New("backup is in progress")
 	}
 
-	backup.DeleteBackupFromStorage()
+	backup.DeleteBackupFromStorage(s.logger)
 
 	backup.Status = BackupStatusDeleted
 	return s.backupRepository.Save(backup)
@@ -134,24 +137,24 @@ func (s *BackupService) DeleteBackup(
 func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 	database, err := s.databaseService.GetDatabaseByID(databaseID)
 	if err != nil {
-		log.Error("Failed to get database by ID", "error", err)
+		s.logger.Error("Failed to get database by ID", "error", err)
 		return
 	}
 
 	lastBackup, err := s.backupRepository.FindLastByDatabaseID(databaseID)
 	if err != nil {
-		log.Error("Failed to find last backup by database ID", "error", err)
+		s.logger.Error("Failed to find last backup by database ID", "error", err)
 		return
 	}
 
 	if lastBackup != nil && lastBackup.Status == BackupStatusInProgress {
-		log.Error("Backup is in progress")
+		s.logger.Error("Backup is in progress")
 		return
 	}
 
 	storage, err := s.storageService.GetStorageByID(database.StorageID)
 	if err != nil {
-		log.Error("Failed to get storage by ID", "error", err)
+		s.logger.Error("Failed to get storage by ID", "error", err)
 		return
 	}
 
@@ -170,7 +173,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 	}
 
 	if err := s.backupRepository.Save(backup); err != nil {
-		log.Error("Failed to save backup", "error", err)
+		s.logger.Error("Failed to save backup", "error", err)
 		return
 	}
 
@@ -183,7 +186,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 		backup.BackupDurationMs = time.Since(start).Milliseconds()
 
 		if err := s.backupRepository.Save(backup); err != nil {
-			log.Error("Failed to update backup progress", "error", err)
+			s.logger.Error("Failed to update backup progress", "error", err)
 		}
 	}
 
@@ -201,7 +204,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 		backup.BackupSizeMb = 0
 
 		if updateErr := s.databaseService.SetBackupError(databaseID, errMsg); updateErr != nil {
-			log.Error(
+			s.logger.Error(
 				"Failed to update database last backup time",
 				"databaseId",
 				databaseID,
@@ -211,7 +214,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 		}
 
 		if err := s.backupRepository.Save(backup); err != nil {
-			log.Error("Failed to save backup", "error", err)
+			s.logger.Error("Failed to save backup", "error", err)
 		}
 
 		s.SendBackupNotification(
@@ -228,14 +231,14 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 	backup.BackupDurationMs = time.Since(start).Milliseconds()
 
 	if err := s.backupRepository.Save(backup); err != nil {
-		log.Error("Failed to save backup", "error", err)
+		s.logger.Error("Failed to save backup", "error", err)
 		return
 	}
 
 	// Update database last backup time
 	now := time.Now().UTC()
 	if updateErr := s.databaseService.SetLastBackupTime(databaseID, now); updateErr != nil {
-		log.Error(
+		s.logger.Error(
 			"Failed to update database last backup time",
 			"databaseId",
 			databaseID,

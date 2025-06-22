@@ -2,15 +2,13 @@ package tools
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	env_utils "postgresus-backend/internal/util/env"
-	"postgresus-backend/internal/util/logger"
 )
-
-var log = logger.GetLogger()
 
 // GetPostgresqlExecutable returns the full path to a specific PostgreSQL executable
 // for the given version. Common executables include: pg_dump, psql, etc.
@@ -37,7 +35,11 @@ func GetPostgresqlExecutable(
 // client tools (pg_dump, psql) available.
 // In development: ./tools/postgresql/postgresql-{VERSION}/bin
 // In production: /usr/pgsql-{VERSION}/bin
-func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDir string) {
+func VerifyPostgresesInstallation(
+	logger *slog.Logger,
+	envMode env_utils.EnvMode,
+	postgresesInstallDir string,
+) {
 	versions := []PostgresqlVersion{
 		PostgresqlVersion13,
 		PostgresqlVersion14,
@@ -54,7 +56,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 	for _, version := range versions {
 		binDir := getPostgresqlBasePath(version, envMode, postgresesInstallDir)
 
-		log.Info(
+		logger.Info(
 			"Verifying PostgreSQL installation",
 			"version",
 			string(version),
@@ -64,7 +66,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 
 		if _, err := os.Stat(binDir); os.IsNotExist(err) {
 			if envMode == env_utils.EnvModeDevelopment {
-				log.Error(
+				logger.Error(
 					"PostgreSQL bin directory not found. Make sure PostgreSQL is installed. Read ./tools/readme.md for details",
 					"version",
 					string(version),
@@ -72,7 +74,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 					binDir,
 				)
 			} else {
-				log.Error(
+				logger.Error(
 					"PostgreSQL bin directory not found. Please ensure PostgreSQL client tools are installed.",
 					"version",
 					string(version),
@@ -91,7 +93,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 				postgresesInstallDir,
 			)
 
-			log.Info(
+			logger.Info(
 				"Checking for PostgreSQL command",
 				"command",
 				cmd,
@@ -103,7 +105,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 
 			if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
 				if envMode == env_utils.EnvModeDevelopment {
-					log.Error(
+					logger.Error(
 						"PostgreSQL command not found. Make sure PostgreSQL is installed. Read ./tools/readme.md for details",
 						"command",
 						cmd,
@@ -113,7 +115,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 						cmdPath,
 					)
 				} else {
-					log.Error(
+					logger.Error(
 						"PostgreSQL command not found. Please ensure PostgreSQL client tools are properly installed.",
 						"command",
 						cmd,
@@ -126,7 +128,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 				os.Exit(1)
 			}
 
-			log.Info(
+			logger.Info(
 				"PostgreSQL command found",
 				"command",
 				cmd,
@@ -135,7 +137,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 			)
 		}
 
-		log.Info(
+		logger.Info(
 			"Installation of PostgreSQL verified",
 			"version",
 			string(version),
@@ -144,7 +146,7 @@ func VerifyPostgresesInstallation(envMode env_utils.EnvMode, postgresesInstallDi
 		)
 	}
 
-	log.Info("All PostgreSQL version-specific client tools verification completed successfully!")
+	logger.Info("All PostgreSQL version-specific client tools verification completed successfully!")
 }
 
 func getPostgresqlBasePath(

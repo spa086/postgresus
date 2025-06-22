@@ -1,19 +1,18 @@
 package restores
 
 import (
+	"log/slog"
 	"postgresus-backend/internal/features/restores/enums"
-	"postgresus-backend/internal/util/logger"
 )
-
-var log = logger.GetLogger()
 
 type RestoreBackgroundService struct {
 	restoreRepository *RestoreRepository
+	logger            *slog.Logger
 }
 
 func (s *RestoreBackgroundService) Run() {
 	if err := s.failRestoresInProgress(); err != nil {
-		log.Error("Failed to fail restores in progress", "error", err)
+		s.logger.Error("Failed to fail restores in progress", "error", err)
 		panic(err)
 	}
 }

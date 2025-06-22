@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"errors"
+	"log/slog"
 	"postgresus-backend/internal/features/notifiers/notifiers/email_notifier"
 	telegram_notifier "postgresus-backend/internal/features/notifiers/notifiers/telegram"
 	webhook_notifier "postgresus-backend/internal/features/notifiers/notifiers/webhook"
@@ -34,8 +35,8 @@ func (n *Notifier) Validate() error {
 	return n.getSpecificNotifier().Validate()
 }
 
-func (n *Notifier) Send(heading string, message string) error {
-	err := n.getSpecificNotifier().Send(heading, message)
+func (n *Notifier) Send(logger *slog.Logger, heading string, message string) error {
+	err := n.getSpecificNotifier().Send(logger, heading, message)
 
 	if err != nil {
 		lastSendError := err.Error()

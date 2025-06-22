@@ -128,9 +128,13 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string) {
 	}
 
 	// Make backup
-	createBackupUC := &usecases_postgresql_backup.CreatePostgresqlBackupUsecase{}
 	progressTracker := func(completedMBs float64) {}
-	err = createBackupUC.Execute(backupID, backupDbConfig, storage, progressTracker)
+	err = usecases_postgresql_backup.GetCreatePostgresqlBackupUsecase().Execute(
+		backupID,
+		backupDbConfig,
+		storage,
+		progressTracker,
+	)
 	assert.NoError(t, err)
 
 	// Create new database
@@ -173,7 +177,7 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string) {
 	}
 
 	// Restore the backup
-	restoreBackupUC := &usecases_postgresql_restore.RestorePostgresqlBackupUsecase{}
+	restoreBackupUC := usecases_postgresql_restore.GetRestorePostgresqlBackupUsecase()
 	err = restoreBackupUC.Execute(restore, completedBackup, storage)
 	assert.NoError(t, err)
 

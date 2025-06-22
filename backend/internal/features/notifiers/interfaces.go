@@ -1,7 +1,9 @@
 package notifiers
 
+import "log/slog"
+
 type NotificationSender interface {
-	Send(heading string, message string) error
+	Send(logger *slog.Logger, heading string, message string) error
 
 	Validate() error
 }

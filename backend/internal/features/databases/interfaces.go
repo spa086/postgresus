@@ -1,13 +1,17 @@
 package databases
 
-import "github.com/google/uuid"
+import (
+	"log/slog"
+
+	"github.com/google/uuid"
+)
 
 type DatabaseValidator interface {
 	Validate() error
 }
 
 type DatabaseConnector interface {
-	TestConnection() error
+	TestConnection(logger *slog.Logger) error
 }
 
 type DatabaseStorageChangeListener interface {

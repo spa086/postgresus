@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,15 +17,14 @@ import (
 	"postgresus-backend/internal/features/databases"
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/storages"
-	"postgresus-backend/internal/util/logger"
 	"postgresus-backend/internal/util/tools"
 
 	"github.com/google/uuid"
 )
 
-var log = logger.GetLogger()
-
-type CreatePostgresqlBackupUsecase struct{}
+type CreatePostgresqlBackupUsecase struct {
+	logger *slog.Logger
+}
 
 // Execute creates a backup of the database
 func (uc *CreatePostgresqlBackupUsecase) Execute(
@@ -35,7 +35,7 @@ func (uc *CreatePostgresqlBackupUsecase) Execute(
 		completedMBs float64,
 	),
 ) error {
-	log.Info(
+	uc.logger.Info(
 		"Creating PostgreSQL backup via pg_dump custom format",
 		"databaseId",
 		db.ID,
@@ -85,7 +85,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	db *databases.Database,
 	backupProgressListener func(completedMBs float64),
 ) error {
-	log.Info("Streaming PostgreSQL backup to storage", "pgBin", pgBin, "args", args)
+	uc.logger.Info("Streaming PostgreSQL backup to storage", "pgBin", pgBin, "args", args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
@@ -126,7 +126,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 
 	// Verify .pgpass file was created correctly
 	if info, err := os.Stat(pgpassFile); err == nil {
-		log.Info("Temporary .pgpass file created successfully",
+		uc.logger.Info("Temporary .pgpass file created successfully",
 			"pgpassFile", pgpassFile,
 			"size", info.Size(),
 			"mode", info.Mode(),
@@ -136,17 +136,17 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	}
 
 	cmd := exec.CommandContext(ctx, pgBin, args...)
-	log.Info("Executing PostgreSQL backup command", "command", cmd.String())
+	uc.logger.Info("Executing PostgreSQL backup command", "command", cmd.String())
 
 	// Start with system environment variables to preserve Windows PATH, SystemRoot, etc.
 	cmd.Env = os.Environ()
 
 	// Use the .pgpass file for authentication
 	cmd.Env = append(cmd.Env, "PGPASSFILE="+pgpassFile)
-	log.Info("Using temporary .pgpass file for authentication", "pgpassFile", pgpassFile)
+	uc.logger.Info("Using temporary .pgpass file for authentication", "pgpassFile", pgpassFile)
 
 	// Debug password setup (without exposing the actual password)
-	log.Info("Setting up PostgreSQL environment",
+	uc.logger.Info("Setting up PostgreSQL environment",
 		"passwordLength", len(password),
 		"passwordEmpty", password == "",
 		"pgBin", pgBin,
@@ -170,11 +170,11 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	// Require SSL when explicitly configured
 	if shouldRequireSSL {
 		cmd.Env = append(cmd.Env, "PGSSLMODE=require")
-		log.Info("Using required SSL mode", "configuredHttps", db.Postgresql.IsHttps)
+		uc.logger.Info("Using required SSL mode", "configuredHttps", db.Postgresql.IsHttps)
 	} else {
 		// SSL not explicitly required, but prefer it if available
 		cmd.Env = append(cmd.Env, "PGSSLMODE=prefer")
-		log.Info("Using preferred SSL mode", "configuredHttps", db.Postgresql.IsHttps)
+		uc.logger.Info("Using preferred SSL mode", "configuredHttps", db.Postgresql.IsHttps)
 	}
 
 	// Set other SSL parameters to avoid certificate issues
@@ -220,7 +220,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	// Start streaming into storage in its own goroutine
 	saveErrCh := make(chan error, 1)
 	go func() {
-		saveErrCh <- storage.SaveFile(backupID, storageReader)
+		saveErrCh <- storage.SaveFile(uc.logger, backupID, storageReader)
 	}()
 
 	// Start pg_dump
@@ -251,7 +251,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	if config.IsShouldShutdown() {
 		if pipeWriter, ok := countingWriter.writer.(*io.PipeWriter); ok {
 			if err := pipeWriter.Close(); err != nil {
-				log.Error("Failed to close counting writer", "error", err)
+				uc.logger.Error("Failed to close counting writer", "error", err)
 			}
 		}
 
@@ -262,7 +262,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	// Close the pipe writer to signal end of data
 	if pipeWriter, ok := countingWriter.writer.(*io.PipeWriter); ok {
 		if err := pipeWriter.Close(); err != nil {
-			log.Error("Failed to close counting writer", "error", err)
+			uc.logger.Error("Failed to close counting writer", "error", err)
 		}
 	}
 
@@ -297,7 +297,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 
 			// Enhanced debugging for exit status 1 with empty stderr
 			if exitCode == 1 && strings.TrimSpace(stderrStr) == "" {
-				log.Error("pg_dump failed with exit status 1 but no stderr output",
+				uc.logger.Error("pg_dump failed with exit status 1 but no stderr output",
 					"pgBin", pgBin,
 					"args", args,
 					"env_vars", []string{
@@ -323,7 +323,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 					strings.Join(args, " "),
 				)
 			} else if exitCode == -1073741819 { // 0xC0000005 in decimal
-				log.Error("PostgreSQL tool crashed with access violation",
+				uc.logger.Error("PostgreSQL tool crashed with access violation",
 					"pgBin", pgBin,
 					"args", args,
 					"exitCode", fmt.Sprintf("0x%X", uint32(exitCode)),

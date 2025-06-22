@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"postgresus-backend/internal/util/logger"
+	"log/slog"
 	"postgresus-backend/internal/util/tools"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
-
-var log = logger.GetLogger()
 
 type PostgresqlDatabase struct {
 	ID uuid.UUID `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
@@ -61,15 +59,19 @@ func (p *PostgresqlDatabase) Validate() error {
 	return nil
 }
 
-func (p *PostgresqlDatabase) TestConnection() error {
+func (p *PostgresqlDatabase) TestConnection(logger *slog.Logger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	return testSingleDatabaseConnection(ctx, p)
+	return testSingleDatabaseConnection(logger, ctx, p)
 }
 
 // testSingleDatabaseConnection tests connection to a specific database for pg_dump
-func testSingleDatabaseConnection(ctx context.Context, p *PostgresqlDatabase) error {
+func testSingleDatabaseConnection(
+	logger *slog.Logger,
+	ctx context.Context,
+	p *PostgresqlDatabase,
+) error {
 	// For single database backup, we need to connect to the specific database
 	if p.Database == nil || *p.Database == "" {
 		return errors.New("database name is required for single database backup (pg_dump)")
@@ -89,7 +91,7 @@ func testSingleDatabaseConnection(ctx context.Context, p *PostgresqlDatabase) er
 	}
 	defer func() {
 		if closeErr := conn.Close(ctx); closeErr != nil {
-			log.Error("Failed to close connection", "error", closeErr)
+			logger.Error("Failed to close connection", "error", closeErr)
 		}
 	}()
 

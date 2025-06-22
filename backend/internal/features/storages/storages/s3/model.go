@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ func (s *S3Storage) TableName() string {
 	return "s3_storages"
 }
 
-func (s *S3Storage) SaveFile(fileID uuid.UUID, file io.Reader) error {
+func (s *S3Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Reader) error {
 	client, err := s.getClient()
 	if err != nil {
 		return err

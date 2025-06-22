@@ -3,6 +3,7 @@ package storages
 import (
 	"errors"
 	"io"
+	"log/slog"
 	local_storage "postgresus-backend/internal/features/storages/storages/local"
 	s3_storage "postgresus-backend/internal/features/storages/storages/s3"
 
@@ -21,8 +22,8 @@ type Storage struct {
 	S3Storage    *s3_storage.S3Storage       `json:"s3Storage"    gorm:"foreignKey:StorageID"`
 }
 
-func (s *Storage) SaveFile(fileID uuid.UUID, file io.Reader) error {
-	err := s.getSpecificStorage().SaveFile(fileID, file)
+func (s *Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Reader) error {
+	err := s.getSpecificStorage().SaveFile(logger, fileID, file)
 	if err != nil {
 		lastSaveError := err.Error()
 		s.LastSaveError = &lastSaveError

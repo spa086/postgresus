@@ -2,6 +2,7 @@ package databases
 
 import (
 	"errors"
+	"log/slog"
 	users_models "postgresus-backend/internal/features/users/models"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 type DatabaseService struct {
 	dbRepository            *DatabaseRepository
 	dbStorageChangeListener DatabaseStorageChangeListener
+	logger                  *slog.Logger
 }
 
 func (s *DatabaseService) SetDatabaseStorageChangeListener(
@@ -131,7 +133,7 @@ func (s *DatabaseService) TestDatabaseConnection(
 		return errors.New("you have not access to this database")
 	}
 
-	err = database.TestConnection()
+	err = database.TestConnection(s.logger)
 	if err != nil {
 		lastSaveError := err.Error()
 		database.LastBackupErrorMessage = &lastSaveError
@@ -146,7 +148,7 @@ func (s *DatabaseService) TestDatabaseConnection(
 func (s *DatabaseService) TestDatabaseConnectionDirect(
 	database *Database,
 ) error {
-	return database.TestConnection()
+	return database.TestConnection(s.logger)
 }
 
 func (s *DatabaseService) GetDatabaseByID(

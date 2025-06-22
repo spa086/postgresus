@@ -2,6 +2,7 @@ package databases
 
 import (
 	"errors"
+	"log/slog"
 	"postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/intervals"
 	"postgresus-backend/internal/features/notifiers"
@@ -102,8 +103,8 @@ func (d *Database) ValidateUpdate(old, new Database) error {
 	return nil
 }
 
-func (d *Database) TestConnection() error {
-	return d.getSpecificDatabase().TestConnection()
+func (d *Database) TestConnection(logger *slog.Logger) error {
+	return d.getSpecificDatabase().TestConnection(logger)
 }
 
 func (d *Database) getSpecificDatabase() DatabaseConnector {

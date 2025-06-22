@@ -5,15 +5,16 @@ import (
 	"postgresus-backend/internal/features/restores/usecases"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/features/users"
+	"postgresus-backend/internal/util/logger"
 )
 
-var restoreBackupUsecase = &usecases.RestoreBackupUsecase{}
 var restoreRepository = &RestoreRepository{}
 var restoreService = &RestoreService{
 	backups.GetBackupService(),
 	restoreRepository,
 	storages.GetStorageService(),
-	restoreBackupUsecase,
+	usecases.GetRestoreBackupUsecase(),
+	logger.GetLogger(),
 }
 var restoreController = &RestoreController{
 	restoreService,
@@ -22,6 +23,7 @@ var restoreController = &RestoreController{
 
 var restoreBackgroundService = &RestoreBackgroundService{
 	restoreRepository,
+	logger.GetLogger(),
 }
 
 func GetRestoreController() *RestoreController {

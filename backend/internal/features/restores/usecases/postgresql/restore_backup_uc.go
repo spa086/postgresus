@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,15 +19,14 @@ import (
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/restores/models"
 	"postgresus-backend/internal/features/storages"
-	"postgresus-backend/internal/util/logger"
 	"postgresus-backend/internal/util/tools"
 
 	"github.com/google/uuid"
 )
 
-var log = logger.GetLogger()
-
-type RestorePostgresqlBackupUsecase struct{}
+type RestorePostgresqlBackupUsecase struct {
+	logger *slog.Logger
+}
 
 func (uc *RestorePostgresqlBackupUsecase) Execute(
 	restore models.Restore,
@@ -37,7 +37,7 @@ func (uc *RestorePostgresqlBackupUsecase) Execute(
 		return errors.New("database type not supported")
 	}
 
-	log.Info(
+	uc.logger.Info(
 		"Restoring PostgreSQL backup via pg_restore",
 		"restoreId",
 		restore.ID,
@@ -96,7 +96,7 @@ func (uc *RestorePostgresqlBackupUsecase) restoreFromStorage(
 	storage *storages.Storage,
 	pgConfig *pgtypes.PostgresqlDatabase,
 ) error {
-	log.Info(
+	uc.logger.Info(
 		"Restoring PostgreSQL backup from storage via temporary file",
 		"pgBin",
 		pgBin,
@@ -142,7 +142,7 @@ func (uc *RestorePostgresqlBackupUsecase) restoreFromStorage(
 	}
 
 	if info, err := os.Stat(pgpassFile); err == nil {
-		log.Info("Temporary .pgpass file created successfully",
+		uc.logger.Info("Temporary .pgpass file created successfully",
 			"pgpassFile", pgpassFile,
 			"size", info.Size(),
 			"mode", info.Mode(),
@@ -183,7 +183,7 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 	tempBackupFile := filepath.Join(tempDir, "backup.dump")
 
 	// Get backup data from storage
-	log.Info(
+	uc.logger.Info(
 		"Downloading backup file from storage to temporary file",
 		"backupId",
 		backup.ID,
@@ -197,7 +197,7 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 	}
 	defer func() {
 		if err := backupReader.Close(); err != nil {
-			log.Error("Failed to close backup reader", "error", err)
+			uc.logger.Error("Failed to close backup reader", "error", err)
 		}
 	}()
 
@@ -209,7 +209,7 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 	}
 	defer func() {
 		if err := tempFile.Close(); err != nil {
-			log.Error("Failed to close temporary file", "error", err)
+			uc.logger.Error("Failed to close temporary file", "error", err)
 		}
 	}()
 
@@ -226,7 +226,7 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 		return "", nil, fmt.Errorf("failed to close temporary backup file: %w", err)
 	}
 
-	log.Info("Backup file written to temporary location", "tempFile", tempBackupFile)
+	uc.logger.Info("Backup file written to temporary location", "tempFile", tempBackupFile)
 	return tempBackupFile, cleanupFunc, nil
 }
 
@@ -239,7 +239,7 @@ func (uc *RestorePostgresqlBackupUsecase) executePgRestore(
 	pgConfig *pgtypes.PostgresqlDatabase,
 ) error {
 	cmd := exec.CommandContext(ctx, pgBin, args...)
-	log.Info("Executing PostgreSQL restore command", "command", cmd.String())
+	uc.logger.Info("Executing PostgreSQL restore command", "command", cmd.String())
 
 	// Setup environment variables
 	uc.setupPgRestoreEnvironment(cmd, pgpassFile, pgConfig)
@@ -302,7 +302,7 @@ func (uc *RestorePostgresqlBackupUsecase) setupPgRestoreEnvironment(
 
 	// Use the .pgpass file for authentication
 	cmd.Env = append(cmd.Env, "PGPASSFILE="+pgpassFile)
-	log.Info("Using temporary .pgpass file for authentication", "pgpassFile", pgpassFile)
+	uc.logger.Info("Using temporary .pgpass file for authentication", "pgpassFile", pgpassFile)
 
 	// Add PostgreSQL-specific environment variables
 	cmd.Env = append(cmd.Env, "PGCLIENTENCODING=UTF8")
@@ -318,10 +318,10 @@ func (uc *RestorePostgresqlBackupUsecase) setupPgRestoreEnvironment(
 	// Configure SSL settings
 	if shouldRequireSSL {
 		cmd.Env = append(cmd.Env, "PGSSLMODE=require")
-		log.Info("Using required SSL mode", "configuredHttps", pgConfig.IsHttps)
+		uc.logger.Info("Using required SSL mode", "configuredHttps", pgConfig.IsHttps)
 	} else {
 		cmd.Env = append(cmd.Env, "PGSSLMODE=prefer")
-		log.Info("Using preferred SSL mode", "configuredHttps", pgConfig.IsHttps)
+		uc.logger.Info("Using preferred SSL mode", "configuredHttps", pgConfig.IsHttps)
 	}
 
 	// Set other SSL parameters to avoid certificate issues

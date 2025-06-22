@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
-	"postgresus-backend/internal/util/logger"
 
 	"github.com/google/uuid"
 )
-
-var log = logger.GetLogger()
 
 type WebhookNotifier struct {
 	NotifierID    uuid.UUID     `json:"notifierId"    gorm:"primaryKey;column:notifier_id"`
@@ -37,7 +35,7 @@ func (t *WebhookNotifier) Validate() error {
 	return nil
 }
 
-func (t *WebhookNotifier) Send(heading string, message string) error {
+func (t *WebhookNotifier) Send(logger *slog.Logger, heading string, message string) error {
 	switch t.WebhookMethod {
 	case WebhookMethodGET:
 		reqURL := fmt.Sprintf("%s?heading=%s&message=%s",
@@ -52,7 +50,7 @@ func (t *WebhookNotifier) Send(heading string, message string) error {
 		}
 		defer func() {
 			if cerr := resp.Body.Close(); cerr != nil {
-				log.Error("failed to close response body", "error", cerr)
+				logger.Error("failed to close response body", "error", cerr)
 			}
 		}()
 
@@ -85,7 +83,7 @@ func (t *WebhookNotifier) Send(heading string, message string) error {
 
 		defer func() {
 			if cerr := resp.Body.Close(); cerr != nil {
-				log.Error("failed to close response body", "error", cerr)
+				logger.Error("failed to close response body", "error", cerr)
 			}
 		}()
 

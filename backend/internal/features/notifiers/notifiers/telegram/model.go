@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,7 +34,7 @@ func (t *TelegramNotifier) Validate() error {
 	return nil
 }
 
-func (t *TelegramNotifier) Send(heading string, message string) error {
+func (t *TelegramNotifier) Send(logger *slog.Logger, heading string, message string) error {
 	fullMessage := heading
 	if message != "" {
 		fullMessage = fmt.Sprintf("%s\n\n%s", heading, message)

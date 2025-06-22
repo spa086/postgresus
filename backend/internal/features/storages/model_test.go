@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	local_storage "postgresus-backend/internal/features/storages/storages/local"
 	s3_storage "postgresus-backend/internal/features/storages/storages/s3"
+	"postgresus-backend/internal/util/logger"
 	"testing"
 	"time"
 
@@ -87,7 +88,7 @@ func Test_Storage_BasicOperations(t *testing.T) {
 
 				fileID := uuid.New()
 
-				err = tc.storage.SaveFile(fileID, bytes.NewReader(fileData))
+				err = tc.storage.SaveFile(logger.GetLogger(), fileID, bytes.NewReader(fileData))
 				require.NoError(t, err, "SaveFile should succeed")
 
 				file, err := tc.storage.GetFile(fileID)
@@ -104,7 +105,7 @@ func Test_Storage_BasicOperations(t *testing.T) {
 				require.NoError(t, err, "Should be able to read test file")
 
 				fileID := uuid.New()
-				err = tc.storage.SaveFile(fileID, bytes.NewReader(fileData))
+				err = tc.storage.SaveFile(logger.GetLogger(), fileID, bytes.NewReader(fileData))
 				require.NoError(t, err, "SaveFile should succeed")
 
 				err = tc.storage.DeleteFile(fileID)

@@ -111,7 +111,7 @@ func loadEnvVariables() {
 	log.Info("ENV_MODE loaded", "mode", env.EnvMode)
 
 	env.PostgresesInstallDir = filepath.Join(backendRoot, "tools", "postgresql")
-	tools.VerifyPostgresesInstallation(env.EnvMode, env.PostgresesInstallDir)
+	tools.VerifyPostgresesInstallation(log, env.EnvMode, env.PostgresesInstallDir)
 
 	// Store the data and temp folders one level below the root
 	// (projectRoot/postgresus-data -> /postgresus-data)

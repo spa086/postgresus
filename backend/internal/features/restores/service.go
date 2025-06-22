@@ -2,6 +2,7 @@ package restores
 
 import (
 	"errors"
+	"log/slog"
 	"postgresus-backend/internal/features/backups"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/restores/enums"
@@ -19,6 +20,7 @@ type RestoreService struct {
 	restoreRepository    *RestoreRepository
 	storageService       *storages.StorageService
 	restoreBackupUsecase *usecases.RestoreBackupUsecase
+	logger               *slog.Logger
 }
 
 func (s *RestoreService) GetRestores(
@@ -53,7 +55,7 @@ func (s *RestoreService) RestoreBackupWithAuth(
 
 	go func() {
 		if err := s.RestoreBackup(backup, requestDTO); err != nil {
-			log.Error("Failed to restore backup", "error", err)
+			s.logger.Error("Failed to restore backup", "error", err)
 		}
 	}()
 

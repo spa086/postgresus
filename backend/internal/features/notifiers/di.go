@@ -1,10 +1,14 @@
 package notifiers
 
-import "postgresus-backend/internal/features/users"
+import (
+	"postgresus-backend/internal/features/users"
+	"postgresus-backend/internal/util/logger"
+)
 
 var notifierRepository = &NotifierRepository{}
 var notifierService = &NotifierService{
 	notifierRepository,
+	logger.GetLogger(),
 }
 var notifierController = &NotifierController{
 	notifierService,

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/smtp"
 	"time"
@@ -56,7 +57,7 @@ func (e *EmailNotifier) Validate() error {
 	return nil
 }
 
-func (e *EmailNotifier) Send(heading string, message string) error {
+func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string) error {
 	// Compose email
 	from := e.SMTPUser
 	to := []string{e.TargetEmail}

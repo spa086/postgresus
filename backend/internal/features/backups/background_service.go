@@ -1,10 +1,10 @@
 package backups
 
 import (
+	"log/slog"
 	"postgresus-backend/internal/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/storages"
-	"postgresus-backend/internal/util/logger"
 	"time"
 )
 
@@ -15,15 +15,14 @@ type BackupBackgroundService struct {
 	storageService   *storages.StorageService
 
 	lastBackupTime time.Time
+	logger         *slog.Logger
 }
-
-var log = logger.GetLogger()
 
 func (s *BackupBackgroundService) Run() {
 	s.lastBackupTime = time.Now().UTC()
 
 	if err := s.failBackupsInProgress(); err != nil {
-		log.Error("Failed to fail backups in progress", "error", err)
+		s.logger.Error("Failed to fail backups in progress", "error", err)
 		panic(err)
 	}
 
@@ -37,11 +36,11 @@ func (s *BackupBackgroundService) Run() {
 		}
 
 		if err := s.cleanOldBackups(); err != nil {
-			log.Error("Failed to clean old backups", "error", err)
+			s.logger.Error("Failed to clean old backups", "error", err)
 		}
 
 		if err := s.runPendingBackups(); err != nil {
-			log.Error("Failed to run pending backups", "error", err)
+			s.logger.Error("Failed to run pending backups", "error", err)
 		}
 
 		s.lastBackupTime = time.Now().UTC()
@@ -102,7 +101,7 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 			dateBeforeBackupsShouldBeDeleted,
 		)
 		if err != nil {
-			log.Error(
+			s.logger.Error(
 				"Failed to find old backups for database",
 				"databaseId",
 				database.ID,
@@ -115,7 +114,7 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 		for _, backup := range oldBackups {
 			storage, err := s.storageService.GetStorageByID(backup.StorageID)
 			if err != nil {
-				log.Error(
+				s.logger.Error(
 					"Failed to get storage by ID",
 					"storageId",
 					backup.StorageID,
@@ -125,14 +124,18 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 				continue
 			}
 
-			storage.DeleteFile(backup.ID)
-
-			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {
-				log.Error("Failed to delete old backup", "backupId", backup.ID, "error", err)
+			err = storage.DeleteFile(backup.ID)
+			if err != nil {
+				s.logger.Error("Failed to delete backup file", "backupId", backup.ID, "error", err)
 				continue
 			}
 
-			log.Info("Deleted old backup", "backupId", backup.ID, "databaseId", database.ID)
+			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {
+				s.logger.Error("Failed to delete old backup", "backupId", backup.ID, "error", err)
+				continue
+			}
+
+			s.logger.Info("Deleted old backup", "backupId", backup.ID, "databaseId", database.ID)
 		}
 	}
 
@@ -152,7 +155,7 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 
 		lastBackup, err := s.backupRepository.FindLastByDatabaseID(database.ID)
 		if err != nil {
-			log.Error(
+			s.logger.Error(
 				"Failed to get last backup for database",
 				"databaseId",
 				database.ID,
@@ -168,7 +171,7 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 		}
 
 		if database.BackupInterval.ShouldTriggerBackup(time.Now().UTC(), lastBackupTime) {
-			log.Info(
+			s.logger.Info(
 				"Triggering scheduled backup",
 				"databaseId",
 				database.ID,
@@ -177,7 +180,7 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 			)
 
 			go s.backupService.MakeBackup(database.ID)
-			log.Info("Successfully triggered scheduled backup", "databaseId", database.ID)
+			s.logger.Info("Successfully triggered scheduled backup", "databaseId", database.ID)
 		}
 	}
 

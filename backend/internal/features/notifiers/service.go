@@ -2,16 +2,15 @@ package notifiers
 
 import (
 	"errors"
+	"log/slog"
 	users_models "postgresus-backend/internal/features/users/models"
-	"postgresus-backend/internal/util/logger"
 
 	"github.com/google/uuid"
 )
 
-var log = logger.GetLogger()
-
 type NotifierService struct {
 	notifierRepository *NotifierRepository
+	logger             *slog.Logger
 }
 
 func (s *NotifierService) SaveNotifier(
@@ -87,7 +86,7 @@ func (s *NotifierService) SendTestNotification(
 		return errors.New("you have not access to this notifier")
 	}
 
-	err = notifier.Send("Test message", "This is a test message")
+	err = notifier.Send(s.logger, "Test message", "This is a test message")
 	if err != nil {
 		return err
 	}
@@ -102,7 +101,7 @@ func (s *NotifierService) SendTestNotification(
 func (s *NotifierService) SendTestNotificationToNotifier(
 	notifier *Notifier,
 ) error {
-	return notifier.Send("Test message", "This is a test message")
+	return notifier.Send(s.logger, "Test message", "This is a test message")
 }
 
 func (s *NotifierService) SendNotification(
@@ -121,20 +120,20 @@ func (s *NotifierService) SendNotification(
 		return
 	}
 
-	err = notifiedFromDb.Send(title, message)
+	err = notifiedFromDb.Send(s.logger, title, message)
 	if err != nil {
 		errMsg := err.Error()
 		notifiedFromDb.LastSendError = &errMsg
 
 		err = s.notifierRepository.Save(notifiedFromDb)
 		if err != nil {
-			log.Error("Failed to save notifier", "error", err)
+			s.logger.Error("Failed to save notifier", "error", err)
 		}
 	}
 
 	notifiedFromDb.LastSendError = nil
 	err = s.notifierRepository.Save(notifiedFromDb)
 	if err != nil {
-		log.Error("Failed to save notifier", "error", err)
+		s.logger.Error("Failed to save notifier", "error", err)
 	}
 }

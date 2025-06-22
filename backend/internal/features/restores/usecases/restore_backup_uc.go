@@ -10,7 +10,7 @@ import (
 )
 
 type RestoreBackupUsecase struct {
-	RestorePostgresqlBackupUsecase *usecases_postgresql.RestorePostgresqlBackupUsecase
+	restorePostgresqlBackupUsecase *usecases_postgresql.RestorePostgresqlBackupUsecase
 }
 
 func (uc *RestoreBackupUsecase) Execute(
@@ -19,7 +19,7 @@ func (uc *RestoreBackupUsecase) Execute(
 	storage *storages.Storage,
 ) error {
 	if restore.Backup.Database.Type == databases.DatabaseTypePostgres {
-		return uc.RestorePostgresqlBackupUsecase.Execute(restore, backup, storage)
+		return uc.restorePostgresqlBackupUsecase.Execute(restore, backup, storage)
 	}
 
 	return errors.New("database type not supported")

@@ -1,6 +1,7 @@
 package backups
 
 import (
+	"log/slog"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/storages"
 	"time"
@@ -27,14 +28,14 @@ type Backup struct {
 	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at"`
 }
 
-func (b *Backup) DeleteBackupFromStorage() {
+func (b *Backup) DeleteBackupFromStorage(logger *slog.Logger) {
 	if b.Status != BackupStatusCompleted {
 		return
 	}
 
 	err := b.Storage.DeleteFile(b.ID)
 	if err != nil {
-		log.Error("Failed to delete backup from storage", "error", err)
+		logger.Error("Failed to delete backup from storage", "error", err)
 		// we ignore the error, because the access to the storage
 		// may be lost, file already deleted, etc.
 	}
