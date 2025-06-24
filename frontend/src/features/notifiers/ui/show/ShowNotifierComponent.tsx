@@ -2,6 +2,7 @@ import { type Notifier, NotifierType } from '../../../../entity/notifiers';
 import { getNotifierLogoFromType } from '../../../../entity/notifiers/models/getNotifierLogoFromType';
 import { getNotifierNameFromType } from '../../../../entity/notifiers/models/getNotifierNameFromType';
 import { ShowEmailNotifierComponent } from './notifier/ShowEmailNotifierComponent';
+import { ShowSlackNotifierComponent } from './notifier/ShowSlackNotifierComponent';
 import { ShowTelegramNotifierComponent } from './notifier/ShowTelegramNotifierComponent';
 import { ShowWebhookNotifierComponent } from './notifier/ShowWebhookNotifierComponent';
 
@@ -30,6 +31,10 @@ export function ShowNotifierComponent({ notifier }: Props) {
 
         {notifier?.notifierType === NotifierType.WEBHOOK && (
           <ShowWebhookNotifierComponent notifier={notifier} />
+        )}
+
+        {notifier?.notifierType === NotifierType.SLACK && (
+          <ShowSlackNotifierComponent notifier={notifier} />
         )}
       </div>
     </div>

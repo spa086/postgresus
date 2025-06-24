@@ -8,6 +8,8 @@ export const getNotifierLogoFromType = (type: NotifierType) => {
       return '/icons/notifiers/telegram.svg';
     case NotifierType.WEBHOOK:
       return '/icons/notifiers/webhook.svg';
+    case NotifierType.SLACK:
+      return '/icons/notifiers/slack.svg';
     default:
       return '';
   }

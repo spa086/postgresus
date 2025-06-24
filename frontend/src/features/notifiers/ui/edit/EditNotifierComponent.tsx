@@ -6,10 +6,15 @@ import {
   NotifierType,
   WebhookMethod,
   notifierApi,
+  validateEmailNotifier,
+  validateSlackNotifier,
+  validateTelegramNotifier,
+  validateWebhookNotifier,
 } from '../../../../entity/notifiers';
 import { getNotifierLogoFromType } from '../../../../entity/notifiers/models/getNotifierLogoFromType';
 import { ToastHelper } from '../../../../shared/toast';
 import { EditEmailNotifierComponent } from './notifiers/EditEmailNotifierComponent';
+import { EditSlackNotifierComponent } from './notifiers/EditSlackNotifierComponent';
 import { EditTelegramNotifierComponent } from './notifiers/EditTelegramNotifierComponent';
 import { EditWebhookNotifierComponent } from './notifiers/EditWebhookNotifierComponent';
 
@@ -67,6 +72,9 @@ export function EditNotifierComponent({
       });
     } catch (e) {
       alert((e as Error).message);
+      alert(
+        'Make sure channel is public or bot is added to the private channel (via @invite) or group. For direct messages use User ID from Slack profile.',
+      );
     }
 
     setIsSendingTestNotification(false);
@@ -102,6 +110,13 @@ export function EditNotifierComponent({
       };
     }
 
+    if (type === NotifierType.SLACK) {
+      notifier.slackNotifier = {
+        botToken: '',
+        targetChatId: '',
+      };
+    }
+
     setNotifier(
       JSON.parse(
         JSON.stringify({
@@ -129,27 +144,28 @@ export function EditNotifierComponent({
     );
   }, [editingNotifier]);
 
+  useEffect(() => {
+    setIsTestNotificationSuccess(false);
+  }, [notifier]);
+
   const isAllDataFilled = () => {
     if (!notifier) return false;
-
     if (!notifier.name) return false;
 
-    if (notifier.notifierType === NotifierType.TELEGRAM) {
-      return notifier.telegramNotifier?.botToken && notifier.telegramNotifier?.targetChatId;
+    if (notifier.notifierType === NotifierType.TELEGRAM && notifier.telegramNotifier) {
+      return validateTelegramNotifier(notifier.telegramNotifier);
     }
 
-    if (notifier.notifierType === NotifierType.EMAIL) {
-      return (
-        notifier.emailNotifier?.targetEmail &&
-        notifier.emailNotifier?.smtpHost &&
-        notifier.emailNotifier?.smtpPort &&
-        notifier.emailNotifier?.smtpUser &&
-        notifier.emailNotifier?.smtpPassword
-      );
+    if (notifier.notifierType === NotifierType.EMAIL && notifier.emailNotifier) {
+      return validateEmailNotifier(notifier.emailNotifier);
     }
 
-    if (notifier.notifierType === NotifierType.WEBHOOK) {
-      return notifier.webhookNotifier?.webhookUrl;
+    if (notifier.notifierType === NotifierType.WEBHOOK && notifier.webhookNotifier) {
+      return validateWebhookNotifier(notifier.webhookNotifier);
+    }
+
+    if (notifier.notifierType === NotifierType.SLACK && notifier.slackNotifier) {
+      return validateSlackNotifier(notifier.slackNotifier);
     }
 
     return false;
@@ -185,6 +201,7 @@ export function EditNotifierComponent({
             { label: 'Telegram', value: NotifierType.TELEGRAM },
             { label: 'Email', value: NotifierType.EMAIL },
             { label: 'Webhook', value: NotifierType.WEBHOOK },
+            { label: 'Slack', value: NotifierType.SLACK },
           ]}
           onChange={(value) => {
             setNotifierType(value);
@@ -218,6 +235,14 @@ export function EditNotifierComponent({
 
         {notifier?.notifierType === NotifierType.WEBHOOK && (
           <EditWebhookNotifierComponent
+            notifier={notifier}
+            setNotifier={setNotifier}
+            setIsUnsaved={setIsUnsaved}
+          />
+        )}
+
+        {notifier?.notifierType === NotifierType.SLACK && (
+          <EditSlackNotifierComponent
             notifier={notifier}
             setNotifier={setNotifier}
             setIsUnsaved={setIsUnsaved}

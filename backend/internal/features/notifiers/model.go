@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"postgresus-backend/internal/features/notifiers/models/email_notifier"
+	slack_notifier "postgresus-backend/internal/features/notifiers/models/slack"
 	telegram_notifier "postgresus-backend/internal/features/notifiers/models/telegram"
 	webhook_notifier "postgresus-backend/internal/features/notifiers/models/webhook"
 
@@ -21,6 +22,7 @@ type Notifier struct {
 	TelegramNotifier *telegram_notifier.TelegramNotifier `json:"telegramNotifier" gorm:"foreignKey:NotifierID"`
 	EmailNotifier    *email_notifier.EmailNotifier       `json:"emailNotifier"    gorm:"foreignKey:NotifierID"`
 	WebhookNotifier  *webhook_notifier.WebhookNotifier   `json:"webhookNotifier"  gorm:"foreignKey:NotifierID"`
+	SlackNotifier    *slack_notifier.SlackNotifier       `json:"slackNotifier"    gorm:"foreignKey:NotifierID"`
 }
 
 func (n *Notifier) TableName() string {
@@ -56,6 +58,8 @@ func (n *Notifier) getSpecificNotifier() NotificationSender {
 		return n.EmailNotifier
 	case NotifierTypeWebhook:
 		return n.WebhookNotifier
+	case NotifierTypeSlack:
+		return n.SlackNotifier
 	default:
 		panic("unknown notifier type: " + string(n.NotifierType))
 	}

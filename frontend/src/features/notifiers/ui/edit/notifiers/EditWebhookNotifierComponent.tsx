@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Input, Select, Tooltip } from 'antd';
 
 import type { Notifier } from '../../../../../entity/notifiers';
-import { WebhookMethod } from '../../../../../entity/notifiers/models/WebhookMethod';
+import { WebhookMethod } from '../../../../../entity/notifiers/models/webhook/WebhookMethod';
 
 interface Props {
   notifier: Notifier;

@@ -8,6 +8,8 @@ export const getNotifierNameFromType = (type: NotifierType) => {
       return 'Telegram';
     case NotifierType.WEBHOOK:
       return 'Webhook';
+    case NotifierType.SLACK:
+      return 'Slack';
     default:
       return '';
   }
