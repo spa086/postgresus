@@ -2,7 +2,7 @@ package storages
 
 import (
 	"net/http"
-	local_storage "postgresus-backend/internal/features/storages/storages/local"
+	local_storage "postgresus-backend/internal/features/storages/models/local"
 	"postgresus-backend/internal/features/users"
 	test_utils "postgresus-backend/internal/util/testing"
 	"testing"

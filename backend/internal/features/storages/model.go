@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	local_storage "postgresus-backend/internal/features/storages/storages/local"
-	s3_storage "postgresus-backend/internal/features/storages/storages/s3"
+	local_storage "postgresus-backend/internal/features/storages/models/local"
+	s3_storage "postgresus-backend/internal/features/storages/models/s3"
 
 	"github.com/google/uuid"
 )

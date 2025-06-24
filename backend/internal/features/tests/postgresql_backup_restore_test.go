@@ -13,7 +13,7 @@ import (
 	"postgresus-backend/internal/features/restores/models"
 	usecases_postgresql_restore "postgresus-backend/internal/features/restores/usecases/postgresql"
 	"postgresus-backend/internal/features/storages"
-	local_storage "postgresus-backend/internal/features/storages/storages/local"
+	local_storage "postgresus-backend/internal/features/storages/models/local"
 	"postgresus-backend/internal/util/tools"
 	"strconv"
 	"testing"

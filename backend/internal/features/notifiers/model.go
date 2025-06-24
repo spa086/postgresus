@@ -3,9 +3,9 @@ package notifiers
 import (
 	"errors"
 	"log/slog"
-	"postgresus-backend/internal/features/notifiers/notifiers/email_notifier"
-	telegram_notifier "postgresus-backend/internal/features/notifiers/notifiers/telegram"
-	webhook_notifier "postgresus-backend/internal/features/notifiers/notifiers/webhook"
+	"postgresus-backend/internal/features/notifiers/models/email_notifier"
+	telegram_notifier "postgresus-backend/internal/features/notifiers/models/telegram"
+	webhook_notifier "postgresus-backend/internal/features/notifiers/models/webhook"
 
 	"github.com/google/uuid"
 )
