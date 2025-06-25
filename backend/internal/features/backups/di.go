@@ -16,6 +16,7 @@ var backupService = &BackupService{
 	storages.GetStorageService(),
 	backupRepository,
 	notifiers.GetNotifierService(),
+	notifiers.GetNotifierService(),
 	usecases.GetCreateBackupUsecase(),
 	logger.GetLogger(),
 }

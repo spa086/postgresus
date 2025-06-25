@@ -1,6 +1,6 @@
 package users
 
-func GetUser() *SignInResponse {
+func GetTestUser() *SignInResponse {
 	isAnyUserExists, err := userService.IsAnyUserExist()
 	if err != nil {
 		panic(err)

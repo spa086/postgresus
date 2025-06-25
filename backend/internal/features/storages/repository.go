@@ -9,47 +9,47 @@ import (
 
 type StorageRepository struct{}
 
-func (r *StorageRepository) Save(s *Storage) error {
+func (r *StorageRepository) Save(storage *Storage) (*Storage, error) {
 	database := db.GetDb()
 
-	return database.Transaction(func(tx *gorm.DB) error {
-		switch s.Type {
+	err := database.Transaction(func(tx *gorm.DB) error {
+		switch storage.Type {
 		case StorageTypeLocal:
-			if s.LocalStorage != nil {
-				s.LocalStorage.StorageID = s.ID
+			if storage.LocalStorage != nil {
+				storage.LocalStorage.StorageID = storage.ID
 			}
 		case StorageTypeS3:
-			if s.S3Storage != nil {
-				s.S3Storage.StorageID = s.ID
+			if storage.S3Storage != nil {
+				storage.S3Storage.StorageID = storage.ID
 			}
 		}
 
-		if s.ID == uuid.Nil {
-			if err := tx.Create(s).
+		if storage.ID == uuid.Nil {
+			if err := tx.Create(storage).
 				Omit("LocalStorage", "S3Storage").
 				Error; err != nil {
 				return err
 			}
 		} else {
-			if err := tx.Save(s).
+			if err := tx.Save(storage).
 				Omit("LocalStorage", "S3Storage").
 				Error; err != nil {
 				return err
 			}
 		}
 
-		switch s.Type {
+		switch storage.Type {
 		case StorageTypeLocal:
-			if s.LocalStorage != nil {
-				s.LocalStorage.StorageID = s.ID // Ensure ID is set
-				if err := tx.Save(s.LocalStorage).Error; err != nil {
+			if storage.LocalStorage != nil {
+				storage.LocalStorage.StorageID = storage.ID // Ensure ID is set
+				if err := tx.Save(storage.LocalStorage).Error; err != nil {
 					return err
 				}
 			}
 		case StorageTypeS3:
-			if s.S3Storage != nil {
-				s.S3Storage.StorageID = s.ID // Ensure ID is set
-				if err := tx.Save(s.S3Storage).Error; err != nil {
+			if storage.S3Storage != nil {
+				storage.S3Storage.StorageID = storage.ID // Ensure ID is set
+				if err := tx.Save(storage.S3Storage).Error; err != nil {
 					return err
 				}
 			}
@@ -57,6 +57,12 @@ func (r *StorageRepository) Save(s *Storage) error {
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return storage, nil
 }
 
 func (r *StorageRepository) FindByID(id uuid.UUID) (*Storage, error) {

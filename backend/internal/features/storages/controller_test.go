@@ -13,7 +13,7 @@ import (
 )
 
 func Test_SaveNewStorage_StorageReturnedViaGet(t *testing.T) {
-	user := users.GetUser()
+	user := users.GetTestUser()
 	router := createRouter()
 	storage := createTestStorage(user.UserID)
 
@@ -48,7 +48,7 @@ func Test_SaveNewStorage_StorageReturnedViaGet(t *testing.T) {
 }
 
 func Test_UpdateExistingStorage_UpdatedStorageReturnedViaGet(t *testing.T) {
-	user := users.GetUser()
+	user := users.GetTestUser()
 	router := createRouter()
 	storage := createTestStorage(user.UserID)
 
@@ -95,7 +95,7 @@ func Test_UpdateExistingStorage_UpdatedStorageReturnedViaGet(t *testing.T) {
 }
 
 func Test_DeleteStorage_StorageNotReturnedViaGet(t *testing.T) {
-	user := users.GetUser()
+	user := users.GetTestUser()
 	router := createRouter()
 	storage := createTestStorage(user.UserID)
 
@@ -127,7 +127,7 @@ func Test_DeleteStorage_StorageNotReturnedViaGet(t *testing.T) {
 }
 
 func Test_TestDirectStorageConnection_ConnectionEstablished(t *testing.T) {
-	user := users.GetUser()
+	user := users.GetTestUser()
 	router := createRouter()
 	storage := createTestStorage(user.UserID)
 
@@ -139,7 +139,7 @@ func Test_TestDirectStorageConnection_ConnectionEstablished(t *testing.T) {
 }
 
 func Test_TestExistingStorageConnection_ConnectionEstablished(t *testing.T) {
-	user := users.GetUser()
+	user := users.GetTestUser()
 	router := createRouter()
 	storage := createTestStorage(user.UserID)
 

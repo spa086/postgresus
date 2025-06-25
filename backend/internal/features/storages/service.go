@@ -30,7 +30,12 @@ func (s *StorageService) SaveStorage(
 		storage.UserID = user.ID
 	}
 
-	return s.storageRepository.Save(storage)
+	_, err := s.storageRepository.Save(storage)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *StorageService) DeleteStorage(
@@ -92,7 +97,12 @@ func (s *StorageService) TestStorageConnection(
 	}
 
 	storage.LastSaveError = nil
-	return s.storageRepository.Save(storage)
+	_, err = s.storageRepository.Save(storage)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *StorageService) TestStorageConnectionDirect(

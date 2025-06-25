@@ -32,7 +32,12 @@ func (s *NotifierService) SaveNotifier(
 		notifier.UserID = user.ID
 	}
 
-	return s.notifierRepository.Save(notifier)
+	_, err := s.notifierRepository.Save(notifier)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *NotifierService) DeleteNotifier(
@@ -91,7 +96,8 @@ func (s *NotifierService) SendTestNotification(
 		return err
 	}
 
-	if err = s.notifierRepository.Save(notifier); err != nil {
+	_, err = s.notifierRepository.Save(notifier)
+	if err != nil {
 		return err
 	}
 
@@ -125,14 +131,14 @@ func (s *NotifierService) SendNotification(
 		errMsg := err.Error()
 		notifiedFromDb.LastSendError = &errMsg
 
-		err = s.notifierRepository.Save(notifiedFromDb)
+		_, err = s.notifierRepository.Save(notifiedFromDb)
 		if err != nil {
 			s.logger.Error("Failed to save notifier", "error", err)
 		}
 	}
 
 	notifiedFromDb.LastSendError = nil
-	err = s.notifierRepository.Save(notifiedFromDb)
+	_, err = s.notifierRepository.Save(notifiedFromDb)
 	if err != nil {
 		s.logger.Error("Failed to save notifier", "error", err)
 	}

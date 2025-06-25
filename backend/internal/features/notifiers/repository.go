@@ -9,10 +9,10 @@ import (
 
 type NotifierRepository struct{}
 
-func (r *NotifierRepository) Save(notifier *Notifier) error {
+func (r *NotifierRepository) Save(notifier *Notifier) (*Notifier, error) {
 	db := storage.GetDb()
 
-	return db.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		switch notifier.NotifierType {
 		case NotifierTypeTelegram:
 			if notifier.TelegramNotifier != nil {
@@ -79,6 +79,12 @@ func (r *NotifierRepository) Save(notifier *Notifier) error {
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return notifier, nil
 }
 
 func (r *NotifierRepository) FindByID(id uuid.UUID) (*Notifier, error) {

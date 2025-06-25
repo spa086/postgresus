@@ -10,7 +10,7 @@ import (
 
 type DatabaseRepository struct{}
 
-func (r *DatabaseRepository) Save(database *Database) error {
+func (r *DatabaseRepository) Save(database *Database) (*Database, error) {
 	db := storage.GetDb()
 
 	isNew := database.ID == uuid.Nil
@@ -20,7 +20,7 @@ func (r *DatabaseRepository) Save(database *Database) error {
 
 	database.StorageID = database.Storage.ID
 
-	return db.Transaction(func(tx *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		if database.BackupInterval != nil {
 			if database.BackupInterval.ID == uuid.Nil {
 				if err := tx.Create(database.BackupInterval).Error; err != nil {
@@ -82,6 +82,12 @@ func (r *DatabaseRepository) Save(database *Database) error {
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database, nil
 }
 
 func (r *DatabaseRepository) FindByID(id uuid.UUID) (*Database, error) {

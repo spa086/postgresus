@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"postgresus-backend/internal/features/backups/usecases"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
@@ -16,12 +15,13 @@ import (
 )
 
 type BackupService struct {
-	databaseService  *databases.DatabaseService
-	storageService   *storages.StorageService
-	backupRepository *BackupRepository
-	notifierService  *notifiers.NotifierService
+	databaseService    *databases.DatabaseService
+	storageService     *storages.StorageService
+	backupRepository   *BackupRepository
+	notifierService    *notifiers.NotifierService
+	notificationSender NotificationSender
 
-	createBackupUseCase *usecases.CreateBackupUsecase
+	createBackupUseCase CreateBackupUsecase
 
 	logger *slog.Logger
 }
@@ -308,7 +308,7 @@ func (s *BackupService) SendBackupNotification(
 			)
 		}
 
-		s.notifierService.SendNotification(
+		s.notificationSender.SendNotification(
 			&notifier,
 			title,
 			message,

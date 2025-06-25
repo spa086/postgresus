@@ -31,7 +31,12 @@ func (s *DatabaseService) CreateDatabase(
 		return err
 	}
 
-	return s.dbRepository.Save(database)
+	_, err := s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DatabaseService) UpdateDatabase(
@@ -71,7 +76,12 @@ func (s *DatabaseService) UpdateDatabase(
 		}
 	}
 
-	return s.dbRepository.Save(database)
+	_, err = s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DatabaseService) DeleteDatabase(
@@ -142,7 +152,12 @@ func (s *DatabaseService) TestDatabaseConnection(
 
 	database.LastBackupErrorMessage = nil
 
-	return s.dbRepository.Save(database)
+	_, err = s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DatabaseService) TestDatabaseConnectionDirect(
@@ -168,7 +183,12 @@ func (s *DatabaseService) SetBackupError(databaseID uuid.UUID, errorMessage stri
 	}
 
 	database.LastBackupErrorMessage = &errorMessage
-	return s.dbRepository.Save(database)
+	_, err = s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DatabaseService) SetLastBackupTime(databaseID uuid.UUID, backupTime time.Time) error {
@@ -179,5 +199,10 @@ func (s *DatabaseService) SetLastBackupTime(databaseID uuid.UUID, backupTime tim
 
 	database.LastBackupTime = &backupTime
 	database.LastBackupErrorMessage = nil // Clear any previous error
-	return s.dbRepository.Save(database)
+	_, err = s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
