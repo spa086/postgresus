@@ -52,6 +52,12 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
     );
   }
 
+  const addDatabaseButton = (
+    <Button type="primary" className="mb-2 w-full" onClick={() => setIsShowAddDatabase(true)}>
+      Add database
+    </Button>
+  );
+
   return (
     <>
       <div className="flex grow">
@@ -59,6 +65,8 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
           className="mx-3 w-[250px] min-w-[250px] overflow-y-auto"
           style={{ height: contentHeight }}
         >
+          {databases.length >= 5 && addDatabaseButton}
+
           {databases.map((database) => (
             <DatabaseCardComponent
               key={database.id}
@@ -68,11 +76,9 @@ export const DatabasesComponent = ({ contentHeight }: Props) => {
             />
           ))}
 
-          <Button type="primary" className="w-full" onClick={() => setIsShowAddDatabase(true)}>
-            Add database
-          </Button>
+          {databases.length < 5 && addDatabaseButton}
 
-          <div className="mx-3 mt-2 text-center text-xs text-gray-500">
+          <div className="mx-3 text-center text-xs text-gray-500">
             Database - is a thing we are backing up
           </div>
         </div>

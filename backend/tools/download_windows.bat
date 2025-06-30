@@ -90,12 +90,4 @@ echo Installation process completed!
 echo PostgreSQL versions are installed in: %POSTGRES_DIR%
 echo.
 
-:: List installed versions
-echo Installed PostgreSQL versions:
-if exist "postgresql" (
-    dir /b "postgresql\postgresql-*" 2>nul
-) else (
-    echo No PostgreSQL installations found
-)
-
 pause

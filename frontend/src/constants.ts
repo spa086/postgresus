@@ -10,3 +10,5 @@ export function getApplicationServer() {
     return `${url.protocol}//${url.hostname}:${url.port || (url.protocol === 'https:' ? '443' : '80')}`;
   }
 }
+
+export const GOOGLE_DRIVE_OAUTH_REDIRECT_URL = 'https://postgresus.com/storages/google-oauth';

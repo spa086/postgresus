@@ -6,6 +6,8 @@ export const getStorageLogoFromType = (type: StorageType) => {
       return '/icons/storages/local.svg';
     case StorageType.S3:
       return '/icons/storages/s3.svg';
+    case StorageType.GOOGLE_DRIVE:
+      return '/icons/storages/google-drive.svg';
     default:
       return '';
   }

@@ -1,8 +1,14 @@
 import { Button, Input, Select } from 'antd';
 import { useEffect, useState } from 'react';
 
-import { type Storage, StorageType, storageApi } from '../../../../entity/storages';
+import {
+  type Storage,
+  StorageType,
+  getStorageLogoFromType,
+  storageApi,
+} from '../../../../entity/storages';
 import { ToastHelper } from '../../../../shared/toast';
+import { EditGoogleDriveStorageComponent } from './storages/EditGoogleDriveStorageComponent';
 import { EditS3StorageComponent } from './storages/EditS3StorageComponent';
 
 interface Props {
@@ -69,6 +75,7 @@ export function EditStorageComponent({
 
     storage.localStorage = undefined;
     storage.s3Storage = undefined;
+    storage.googleDriveStorage = undefined;
 
     if (type === StorageType.LOCAL) {
       storage.localStorage = {};
@@ -84,6 +91,13 @@ export function EditStorageComponent({
       };
     }
 
+    if (type === StorageType.GOOGLE_DRIVE) {
+      storage.googleDriveStorage = {
+        clientId: '',
+        clientSecret: '',
+      };
+    }
+
     setStorage(
       JSON.parse(
         JSON.stringify({
@@ -95,7 +109,8 @@ export function EditStorageComponent({
   };
 
   useEffect(() => {
-    setIsUnsaved(false);
+    setIsUnsaved(true);
+
     setStorage(
       editingStorage
         ? JSON.parse(JSON.stringify(editingStorage))
@@ -122,6 +137,14 @@ export function EditStorageComponent({
         storage.s3Storage?.s3Bucket &&
         storage.s3Storage?.s3AccessKey &&
         storage.s3Storage?.s3SecretKey
+      );
+    }
+
+    if (storage.type === StorageType.GOOGLE_DRIVE) {
+      return (
+        storage.googleDriveStorage?.clientId &&
+        storage.googleDriveStorage?.clientSecret &&
+        storage.googleDriveStorage?.tokenJson
       );
     }
 
@@ -157,6 +180,7 @@ export function EditStorageComponent({
           options={[
             { label: 'Local storage', value: StorageType.LOCAL },
             { label: 'S3', value: StorageType.S3 },
+            { label: 'Google Drive', value: StorageType.GOOGLE_DRIVE },
           ]}
           onChange={(value) => {
             setStorageType(value);
@@ -165,6 +189,8 @@ export function EditStorageComponent({
           size="small"
           className="w-full max-w-[250px]"
         />
+
+        <img src={getStorageLogoFromType(storage?.type)} className="ml-2 h-4 w-4" />
       </div>
 
       <div className="mt-5" />
@@ -172,6 +198,14 @@ export function EditStorageComponent({
       <div>
         {storage?.type === StorageType.S3 && (
           <EditS3StorageComponent
+            storage={storage}
+            setStorage={setStorage}
+            setIsUnsaved={setIsUnsaved}
+          />
+        )}
+
+        {storage?.type === StorageType.GOOGLE_DRIVE && (
+          <EditGoogleDriveStorageComponent
             storage={storage}
             setStorage={setStorage}
             setIsUnsaved={setIsUnsaved}

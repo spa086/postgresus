@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"postgresus-backend/internal/config"
+	google_drive_storage "postgresus-backend/internal/features/storages/models/google_drive"
 	local_storage "postgresus-backend/internal/features/storages/models/local"
 	s3_storage "postgresus-backend/internal/features/storages/models/s3"
 	"postgresus-backend/internal/util/logger"
@@ -33,6 +35,8 @@ type S3Container struct {
 
 func Test_Storage_BasicOperations(t *testing.T) {
 	ctx := context.Background()
+
+	validateEnvVariables(t)
 
 	// Setup S3 container
 	s3Container, err := setupS3Container(ctx)
@@ -66,6 +70,15 @@ func Test_Storage_BasicOperations(t *testing.T) {
 				S3AccessKey: s3Container.accessKey,
 				S3SecretKey: s3Container.secretKey,
 				S3Endpoint:  "http://" + s3Container.endpoint, // Use http:// explicitly for testing
+			},
+		},
+		{
+			name: "GoogleDriveStorage",
+			storage: &google_drive_storage.GoogleDriveStorage{
+				StorageID:    uuid.New(),
+				ClientID:     config.GetEnv().TestGoogleDriveClientID,
+				ClientSecret: config.GetEnv().TestGoogleDriveClientSecret,
+				TokenJSON:    config.GetEnv().TestGoogleDriveTokenJSON,
 			},
 		},
 	}
@@ -221,4 +234,11 @@ func setupS3Container(ctx context.Context) (*S3Container, error) {
 		bucketName: bucketName,
 		region:     region,
 	}, nil
+}
+
+func validateEnvVariables(t *testing.T) {
+	env := config.GetEnv()
+	assert.NotEmpty(t, env.TestGoogleDriveClientID, "TEST_GOOGLE_DRIVE_CLIENT_ID is empty")
+	assert.NotEmpty(t, env.TestGoogleDriveClientSecret, "TEST_GOOGLE_DRIVE_CLIENT_SECRET is empty")
+	assert.NotEmpty(t, env.TestGoogleDriveTokenJSON, "TEST_GOOGLE_DRIVE_TOKEN_JSON is empty")
 }

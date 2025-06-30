@@ -43,10 +43,21 @@ export const NotifiersComponent = ({ contentHeight }: Props) => {
     );
   }
 
+  const addNotifierButton = (
+    <Button type="primary" className="mb-2 w-full" onClick={() => setIsShowAddNotifier(true)}>
+      Add notifier
+    </Button>
+  );
+
   return (
     <>
       <div className="flex grow">
-        <div className="mx-3 w-[250px] overflow-y-auto" style={{ height: contentHeight }}>
+        <div
+          className="mx-3 w-[250px] min-w-[250px] overflow-y-auto"
+          style={{ height: contentHeight }}
+        >
+          {notifiers.length >= 5 && addNotifierButton}
+
           {notifiers.map((notifier) => (
             <NotifierCardComponent
               key={notifier.id}
@@ -56,11 +67,9 @@ export const NotifiersComponent = ({ contentHeight }: Props) => {
             />
           ))}
 
-          <Button type="primary" className="w-full" onClick={() => setIsShowAddNotifier(true)}>
-            Add notifier
-          </Button>
+          {notifiers.length < 5 && addNotifierButton}
 
-          <div className="mx-3 mt-2 text-center text-xs text-gray-500">
+          <div className="mx-3 text-center text-xs text-gray-500">
             Notifier - is a place where notifications will be sent (email, Slack, Telegram, etc.)
           </div>
         </div>

@@ -22,17 +22,21 @@ func (r *StorageRepository) Save(storage *Storage) (*Storage, error) {
 			if storage.S3Storage != nil {
 				storage.S3Storage.StorageID = storage.ID
 			}
+		case StorageTypeGoogleDrive:
+			if storage.GoogleDriveStorage != nil {
+				storage.GoogleDriveStorage.StorageID = storage.ID
+			}
 		}
 
 		if storage.ID == uuid.Nil {
 			if err := tx.Create(storage).
-				Omit("LocalStorage", "S3Storage").
+				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage").
 				Error; err != nil {
 				return err
 			}
 		} else {
 			if err := tx.Save(storage).
-				Omit("LocalStorage", "S3Storage").
+				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage").
 				Error; err != nil {
 				return err
 			}
@@ -50,6 +54,13 @@ func (r *StorageRepository) Save(storage *Storage) (*Storage, error) {
 			if storage.S3Storage != nil {
 				storage.S3Storage.StorageID = storage.ID // Ensure ID is set
 				if err := tx.Save(storage.S3Storage).Error; err != nil {
+					return err
+				}
+			}
+		case StorageTypeGoogleDrive:
+			if storage.GoogleDriveStorage != nil {
+				storage.GoogleDriveStorage.StorageID = storage.ID // Ensure ID is set
+				if err := tx.Save(storage.GoogleDriveStorage).Error; err != nil {
 					return err
 				}
 			}
@@ -72,6 +83,7 @@ func (r *StorageRepository) FindByID(id uuid.UUID) (*Storage, error) {
 		GetDb().
 		Preload("LocalStorage").
 		Preload("S3Storage").
+		Preload("GoogleDriveStorage").
 		Where("id = ?", id).
 		First(&s).Error; err != nil {
 		return nil, err
@@ -87,6 +99,7 @@ func (r *StorageRepository) FindByUserID(userID uuid.UUID) ([]*Storage, error) {
 		GetDb().
 		Preload("LocalStorage").
 		Preload("S3Storage").
+		Preload("GoogleDriveStorage").
 		Where("user_id = ?", userID).
 		Order("name ASC").
 		Find(&storages).Error; err != nil {
@@ -109,6 +122,12 @@ func (r *StorageRepository) Delete(s *Storage) error {
 		case StorageTypeS3:
 			if s.S3Storage != nil {
 				if err := tx.Delete(s.S3Storage).Error; err != nil {
+					return err
+				}
+			}
+		case StorageTypeGoogleDrive:
+			if s.GoogleDriveStorage != nil {
+				if err := tx.Delete(s.GoogleDriveStorage).Error; err != nil {
 					return err
 				}
 			}

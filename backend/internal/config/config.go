@@ -28,6 +28,10 @@ type EnvVariables struct {
 
 	DataFolder string
 	TempFolder string
+
+	TestGoogleDriveClientID     string `env:"TEST_GOOGLE_DRIVE_CLIENT_ID"     required:"true"`
+	TestGoogleDriveClientSecret string `env:"TEST_GOOGLE_DRIVE_CLIENT_SECRET" required:"true"`
+	TestGoogleDriveTokenJSON    string `env:"TEST_GOOGLE_DRIVE_TOKEN_JSON"    required:"true"`
 }
 
 var (

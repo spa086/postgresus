@@ -3,6 +3,7 @@ import { BrowserRouter, Route } from 'react-router';
 import { Routes } from 'react-router';
 
 import { userApi } from './entity/users';
+import { OauthStorageComponent } from './features/storages/OauthStorageComponent';
 import { AuthPageComponent } from './pages/AuthPageComponent';
 import { MainScreenComponent } from './widgets/main/MainScreenComponent';
 
@@ -22,6 +23,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={!isAuthorized ? <AuthPageComponent /> : <MainScreenComponent />} />
+        <Route
+          path="/storages/google-oauth"
+          element={!isAuthorized ? <AuthPageComponent /> : <OauthStorageComponent />}
+        />
       </Routes>
     </BrowserRouter>
   );

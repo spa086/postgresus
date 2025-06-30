@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	google_drive_storage "postgresus-backend/internal/features/storages/models/google_drive"
 	local_storage "postgresus-backend/internal/features/storages/models/local"
 	s3_storage "postgresus-backend/internal/features/storages/models/s3"
 
@@ -18,8 +19,9 @@ type Storage struct {
 	LastSaveError *string     `json:"lastSaveError" gorm:"column:last_save_error;type:text"`
 
 	// specific storage
-	LocalStorage *local_storage.LocalStorage `json:"localStorage" gorm:"foreignKey:StorageID"`
-	S3Storage    *s3_storage.S3Storage       `json:"s3Storage"    gorm:"foreignKey:StorageID"`
+	LocalStorage       *local_storage.LocalStorage              `json:"localStorage"       gorm:"foreignKey:StorageID"`
+	S3Storage          *s3_storage.S3Storage                    `json:"s3Storage"          gorm:"foreignKey:StorageID"`
+	GoogleDriveStorage *google_drive_storage.GoogleDriveStorage `json:"googleDriveStorage" gorm:"foreignKey:StorageID"`
 }
 
 func (s *Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Reader) error {
@@ -65,6 +67,8 @@ func (s *Storage) getSpecificStorage() StorageFileSaver {
 		return s.LocalStorage
 	case StorageTypeS3:
 		return s.S3Storage
+	case StorageTypeGoogleDrive:
+		return s.GoogleDriveStorage
 	default:
 		panic("invalid storage type: " + string(s.Type))
 	}

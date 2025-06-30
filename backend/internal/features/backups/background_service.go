@@ -127,7 +127,6 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 			err = storage.DeleteFile(backup.ID)
 			if err != nil {
 				s.logger.Error("Failed to delete backup file", "backupId", backup.ID, "error", err)
-				continue
 			}
 
 			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {

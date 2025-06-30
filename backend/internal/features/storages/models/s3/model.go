@@ -44,7 +44,7 @@ func (s *S3Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Read
 	_, err = client.PutObject(
 		context.TODO(),
 		s.S3Bucket,
-		fileID.String()+".zip",
+		fileID.String(),
 		bytes.NewReader(data),
 		int64(len(data)),
 		minio.PutObjectOptions{},
@@ -65,7 +65,7 @@ func (s *S3Storage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
 	object, err := client.GetObject(
 		context.TODO(),
 		s.S3Bucket,
-		fileID.String()+".zip",
+		fileID.String(),
 		minio.GetObjectOptions{},
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func (s *S3Storage) DeleteFile(fileID uuid.UUID) error {
 	err = client.RemoveObject(
 		context.TODO(),
 		s.S3Bucket,
-		fileID.String()+".zip",
+		fileID.String(),
 		minio.RemoveObjectOptions{},
 	)
 	if err != nil {

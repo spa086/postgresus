@@ -6,6 +6,8 @@ export const getStorageNameFromType = (type: StorageType) => {
       return 'local storage';
     case StorageType.S3:
       return 'S3';
+    case StorageType.GOOGLE_DRIVE:
+      return 'Google Drive';
     default:
       return '';
   }

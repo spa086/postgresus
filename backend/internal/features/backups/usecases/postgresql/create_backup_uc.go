@@ -44,6 +44,11 @@ func (uc *CreatePostgresqlBackupUsecase) Execute(
 	)
 
 	pg := db.Postgresql
+
+	if pg == nil {
+		return fmt.Errorf("postgresql database configuration is required for pg_dump backups")
+	}
+
 	if pg.Database == nil || *pg.Database == "" {
 		return fmt.Errorf("database name is required for pg_dump backups")
 	}

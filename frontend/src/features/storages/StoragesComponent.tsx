@@ -45,10 +45,21 @@ export const StoragesComponent = ({ contentHeight }: Props) => {
     );
   }
 
+  const addStorageButton = (
+    <Button type="primary" className="mb-2 w-full" onClick={() => setIsShowAddStorage(true)}>
+      Add storage
+    </Button>
+  );
+
   return (
     <>
       <div className="flex grow">
-        <div className="mx-3 w-[250px] overflow-y-auto" style={{ height: contentHeight }}>
+        <div
+          className="mx-3 w-[250px] min-w-[250px] overflow-y-auto"
+          style={{ height: contentHeight }}
+        >
+          {storages.length >= 5 && addStorageButton}
+
           {storages.map((storage) => (
             <StorageCardComponent
               key={storage.id}
@@ -58,11 +69,9 @@ export const StoragesComponent = ({ contentHeight }: Props) => {
             />
           ))}
 
-          <Button type="primary" className="w-full" onClick={() => setIsShowAddStorage(true)}>
-            Add storage
-          </Button>
+          {storages.length < 5 && addStorageButton}
 
-          <div className="mx-3 mt-2 text-center text-xs text-gray-500">
+          <div className="mx-3 text-center text-xs text-gray-500">
             Storage - is a place where backups will be stored (local disk, S3, etc.)
           </div>
         </div>

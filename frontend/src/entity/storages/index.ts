@@ -5,3 +5,4 @@ export { type LocalStorage } from './models/LocalStorage';
 export { type S3Storage } from './models/S3Storage';
 export { getStorageLogoFromType } from './models/getStorageLogoFromType';
 export { getStorageNameFromType } from './models/getStorageNameFromType';
+export { type GoogleDriveStorage } from './models/GoogleDriveStorage';
