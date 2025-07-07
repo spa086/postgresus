@@ -18,3 +18,71 @@ services:
     container_name: dev-db
     command: -p 5437
     shm_size: 10gb
+
+  # Test MinIO container
+  test-minio:
+    image: minio/minio:latest
+    ports:
+      - "${TEST_MINIO_PORT:-9000}:9000"
+      - "${TEST_MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      - MINIO_ROOT_USER=testuser
+      - MINIO_ROOT_PASSWORD=testpassword
+    container_name: test-minio
+    command: server /data --console-address ":9001"
+
+  # Test PostgreSQL containers
+  test-postgres-13:
+    image: postgres:13
+    ports:
+      - "${TEST_POSTGRES_13_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpassword
+    container_name: test-postgres-13
+    shm_size: 1gb
+
+  test-postgres-14:
+    image: postgres:14
+    ports:
+      - "${TEST_POSTGRES_14_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpassword
+    container_name: test-postgres-14
+    shm_size: 1gb
+
+  test-postgres-15:
+    image: postgres:15
+    ports:
+      - "${TEST_POSTGRES_15_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpassword
+    container_name: test-postgres-15
+    shm_size: 1gb
+
+  test-postgres-16:
+    image: postgres:16
+    ports:
+      - "${TEST_POSTGRES_16_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpassword
+    container_name: test-postgres-16
+    shm_size: 1gb
+
+  test-postgres-17:
+    image: postgres:17
+    ports:
+      - "${TEST_POSTGRES_17_PORT}:5432"
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpassword
+    container_name: test-postgres-17
+    shm_size: 1gb

@@ -37,15 +37,19 @@ type Database struct {
 	// they are used for pretty UI
 	LastBackupTime         *time.Time `json:"lastBackupTime,omitempty"         gorm:"column:last_backup_time;type:timestamp with time zone"`
 	LastBackupErrorMessage *string    `json:"lastBackupErrorMessage,omitempty" gorm:"column:last_backup_error_message;type:text"`
+
+	HealthStatus *HealthStatus `json:"healthStatus" gorm:"column:health_status;type:text;not null"`
 }
 
 func (d *Database) BeforeSave(tx *gorm.DB) error {
 	// Convert SendNotificationsOn array to string
 	if len(d.SendNotificationsOn) > 0 {
 		notificationTypes := make([]string, len(d.SendNotificationsOn))
+
 		for i, notificationType := range d.SendNotificationsOn {
 			notificationTypes[i] = string(notificationType)
 		}
+
 		d.SendNotificationsOnString = strings.Join(notificationTypes, ",")
 	} else {
 		d.SendNotificationsOnString = ""

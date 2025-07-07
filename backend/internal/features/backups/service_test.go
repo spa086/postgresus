@@ -21,6 +21,10 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 	notifier := notifiers.CreateTestNotifier(user.UserID)
 	database := databases.CreateTestDatabase(user.UserID, storage, notifier)
 
+	defer storages.RemoveTestStorage(storage.ID)
+	defer notifiers.RemoveTestNotifier(notifier)
+	defer databases.RemoveTestDatabase(database)
+
 	t.Run("BackupFailed_FailNotificationSent", func(t *testing.T) {
 		mockNotificationSender := &MockNotificationSender{}
 		backupService := &BackupService{

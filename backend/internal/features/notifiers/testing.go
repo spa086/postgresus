@@ -24,3 +24,10 @@ func CreateTestNotifier(userID uuid.UUID) *Notifier {
 
 	return notifier
 }
+
+func RemoveTestNotifier(notifier *Notifier) {
+	err := notifierRepository.Delete(notifier)
+	if err != nil {
+		panic(err)
+	}
+}

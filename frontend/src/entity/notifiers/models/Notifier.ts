@@ -1,6 +1,6 @@
 import type { NotifierType } from './NotifierType';
-import type { SlackNotifier } from './slack/SlackNotifier';
 import type { EmailNotifier } from './email/EmailNotifier';
+import type { SlackNotifier } from './slack/SlackNotifier';
 import type { TelegramNotifier } from './telegram/TelegramNotifier';
 import type { WebhookNotifier } from './webhook/WebhookNotifier';
 

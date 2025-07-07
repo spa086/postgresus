@@ -1,6 +1,7 @@
 package databases
 
 import (
+	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/users"
 	"postgresus-backend/internal/util/logger"
 )
@@ -9,8 +10,10 @@ var databaseRepository = &DatabaseRepository{}
 
 var databaseService = &DatabaseService{
 	databaseRepository,
-	nil,
+	notifiers.GetNotifierService(),
 	logger.GetLogger(),
+	nil,
+	nil,
 }
 
 var databaseController = &DatabaseController{

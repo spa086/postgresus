@@ -1,4 +1,4 @@
-package healthcheck
+package system_healthcheck
 
 import (
 	"net/http"
@@ -11,17 +11,17 @@ type HealthcheckController struct {
 }
 
 func (c *HealthcheckController) RegisterRoutes(router *gin.RouterGroup) {
-	router.GET("/health", c.CheckHealth)
+	router.GET("/system/health", c.CheckHealth)
 }
 
 // CheckHealth
 // @Summary Check system health
 // @Description Check if the system is healthy by testing database connection
-// @Tags healthcheck
+// @Tags system/health
 // @Produce json
 // @Success 200 {object} HealthcheckResponse
 // @Failure 503 {object} HealthcheckResponse
-// @Router /health [get]
+// @Router /system/health [get]
 func (c *HealthcheckController) CheckHealth(ctx *gin.Context) {
 	err := c.healthcheckService.IsHealthy()
 

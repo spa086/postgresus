@@ -56,7 +56,7 @@ export const MainScreenComponent = () => {
         <div className="mr-3 ml-auto flex items-center gap-5">
           <a
             className="hover:opacity-80"
-            href={`${getApplicationServer()}/api/v1/health`}
+            href={`${getApplicationServer()}/api/v1/system/health`}
             target="_blank"
             rel="noreferrer"
           >

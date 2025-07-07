@@ -20,12 +20,9 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type S3Container struct {
-	testcontainers.Container
 	endpoint   string
 	accessKey  string
 	secretKey  string
@@ -38,14 +35,9 @@ func Test_Storage_BasicOperations(t *testing.T) {
 
 	validateEnvVariables(t)
 
-	// Setup S3 container
+	// Setup S3 connection to docker-compose MinIO
 	s3Container, err := setupS3Container(ctx)
 	require.NoError(t, err, "Failed to setup S3 container")
-	defer func() {
-		if err := s3Container.Terminate(ctx); err != nil {
-			t.Logf("Failed to terminate S3 container: %v", err)
-		}
-	}()
 
 	// Setup test file
 	testFilePath, err := setupTestFile()
@@ -69,7 +61,7 @@ func Test_Storage_BasicOperations(t *testing.T) {
 				S3Region:    s3Container.region,
 				S3AccessKey: s3Container.accessKey,
 				S3SecretKey: s3Container.secretKey,
-				S3Endpoint:  "http://" + s3Container.endpoint, // Use http:// explicitly for testing
+				S3Endpoint:  "http://" + s3Container.endpoint,
 			},
 		},
 		{
@@ -155,50 +147,18 @@ func setupTestFile() (string, error) {
 	return testFilePath, nil
 }
 
-// setupS3Container creates and starts a MinIO container for testing
+// setupS3Container connects to the docker-compose MinIO service
 func setupS3Container(ctx context.Context) (*S3Container, error) {
-	accessKey := "minioadmin"
-	secretKey := "minioadmin"
+	env := config.GetEnv()
+
+	accessKey := "testuser"
+	secretKey := "testpassword"
 	bucketName := "test-bucket"
 	region := "us-east-1"
-
-	req := testcontainers.ContainerRequest{
-		Image:        "minio/minio:latest",
-		ExposedPorts: []string{"9000/tcp", "9001/tcp"},
-		Env: map[string]string{
-			"MINIO_ACCESS_KEY": accessKey,
-			"MINIO_SECRET_KEY": secretKey,
-		},
-		Cmd: []string{"server", "/data"},
-		WaitingFor: wait.ForAll(
-			wait.ForLog("MinIO Object Storage Server"),
-			wait.ForListeningPort("9000/tcp"),
-		),
-		AutoRemove: true,
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to start minio container: %w", err)
-	}
-
-	mappedHost, err := container.Host(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get host: %w", err)
-	}
-
-	mappedPort, err := container.MappedPort(ctx, "9000")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get mapped port: %w", err)
-	}
-
-	mappedEndpoint := fmt.Sprintf("%s:%s", mappedHost, mappedPort.Port())
+	endpoint := fmt.Sprintf("localhost:%s", env.TestMinioPort)
 
 	// Create MinIO client and ensure bucket exists
-	minioClient, err := minio.New(mappedEndpoint, &minio.Options{
+	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: false,
 		Region: region,
@@ -227,8 +187,7 @@ func setupS3Container(ctx context.Context) (*S3Container, error) {
 	}
 
 	return &S3Container{
-		Container:  container,
-		endpoint:   mappedEndpoint,
+		endpoint:   endpoint,
 		accessKey:  accessKey,
 		secretKey:  secretKey,
 		bucketName: bucketName,
@@ -241,4 +200,5 @@ func validateEnvVariables(t *testing.T) {
 	assert.NotEmpty(t, env.TestGoogleDriveClientID, "TEST_GOOGLE_DRIVE_CLIENT_ID is empty")
 	assert.NotEmpty(t, env.TestGoogleDriveClientSecret, "TEST_GOOGLE_DRIVE_CLIENT_SECRET is empty")
 	assert.NotEmpty(t, env.TestGoogleDriveTokenJSON, "TEST_GOOGLE_DRIVE_TOKEN_JSON is empty")
+	assert.NotEmpty(t, env.TestMinioPort, "TEST_MINIO_PORT is empty")
 }

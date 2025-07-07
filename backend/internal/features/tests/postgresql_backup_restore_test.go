@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,16 +18,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 const createAndFillTableQuery = `
+DROP TABLE IF EXISTS test_data;
+
 CREATE TABLE test_data (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -43,14 +41,13 @@ INSERT INTO test_data (name, value) VALUES
 `
 
 type PostgresContainer struct {
-	Container testcontainers.Container
-	Host      string
-	Port      int
-	Username  string
-	Password  string
-	Database  string
-	Version   string
-	DB        *sqlx.DB
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Database string
+	Version  string
+	DB       *sqlx.DB
 }
 
 type TestDataItem struct {
@@ -62,38 +59,36 @@ type TestDataItem struct {
 
 // Main test functions for each PostgreSQL version
 func Test_BackupAndRestorePostgresql_RestoreIsSuccesful(t *testing.T) {
+	env := config.GetEnv()
 	cases := []struct {
 		name    string
 		version string
+		port    string
 	}{
-		{"PostgreSQL 13", "13"},
-		{"PostgreSQL 14", "14"},
-		{"PostgreSQL 15", "15"},
-		{"PostgreSQL 16", "16"},
-		{"PostgreSQL 17", "17"},
+		{"PostgreSQL 13", "13", env.TestPostgres13Port},
+		{"PostgreSQL 14", "14", env.TestPostgres14Port},
+		{"PostgreSQL 15", "15", env.TestPostgres15Port},
+		{"PostgreSQL 16", "16", env.TestPostgres16Port},
+		{"PostgreSQL 17", "17", env.TestPostgres17Port},
 	}
 
 	for _, tc := range cases {
+		tc := tc // capture loop variable
 		t.Run(tc.name, func(t *testing.T) {
-			testBackupRestoreForVersion(t, tc.version)
+			t.Parallel() // Enable parallel execution
+			testBackupRestoreForVersion(t, tc.version, tc.port)
 		})
 	}
 }
 
 // Run a test for a specific PostgreSQL version
-func testBackupRestoreForVersion(t *testing.T, pgVersion string) {
-	ctx := context.Background()
-
-	// Start PostgreSQL container
-	container, err := startPostgresContainer(ctx, pgVersion)
+func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
+	// Connect to pre-configured PostgreSQL container
+	container, err := connectToPostgresContainer(pgVersion, port)
 	assert.NoError(t, err)
 	defer func() {
 		if container.DB != nil {
 			container.DB.Close()
-		}
-
-		if container.Container != nil {
-			container.Container.Terminate(ctx)
 		}
 	}()
 
@@ -139,6 +134,9 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string) {
 
 	// Create new database
 	newDBName := "restoreddb"
+	_, err = container.DB.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", newDBName))
+	assert.NoError(t, err)
+
 	_, err = container.DB.Exec(fmt.Sprintf("CREATE DATABASE %s;", newDBName))
 	assert.NoError(t, err)
 
@@ -219,51 +217,19 @@ func verifyDataIntegrity(t *testing.T, originalDB *sqlx.DB, restoredDB *sqlx.DB)
 	}
 }
 
-func startPostgresContainer(ctx context.Context, version string) (*PostgresContainer, error) {
+func connectToPostgresContainer(version string, port string) (*PostgresContainer, error) {
 	dbName := "testdb"
-	password := "postgres"
-	username := "postgres"
-	port := "5432/tcp"
+	password := "testpassword"
+	username := "testuser"
+	host := "localhost"
 
-	req := testcontainers.ContainerRequest{
-		Image:        fmt.Sprintf("postgres:%s", version),
-		ExposedPorts: []string{port},
-		Env: map[string]string{
-			"POSTGRES_PASSWORD": password,
-			"POSTGRES_USER":     username,
-			"POSTGRES_DB":       dbName,
-		},
-		WaitingFor: wait.ForAll(
-			wait.ForLog("database system is ready to accept connections"),
-			wait.ForListeningPort(nat.Port(port)),
-		),
-	}
-
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	mappedHost, err := container.Host(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	mappedPort, err := container.MappedPort(ctx, nat.Port(port))
-	if err != nil {
-		return nil, err
-	}
-
-	portInt, err := strconv.Atoi(mappedPort.Port())
+	portInt, err := strconv.Atoi(port)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse port: %w", err)
 	}
 
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		mappedHost, portInt, username, password, dbName)
+		host, portInt, username, password, dbName)
 
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
@@ -271,13 +237,12 @@ func startPostgresContainer(ctx context.Context, version string) (*PostgresConta
 	}
 
 	return &PostgresContainer{
-		Container: container,
-		Host:      mappedHost,
-		Port:      portInt,
-		Username:  username,
-		Password:  password,
-		Database:  dbName,
-		Version:   version,
-		DB:        db,
+		Host:     host,
+		Port:     portInt,
+		Username: username,
+		Password: password,
+		Database: dbName,
+		Version:  version,
+		DB:       db,
 	}, nil
 }

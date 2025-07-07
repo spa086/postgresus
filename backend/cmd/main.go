@@ -17,10 +17,12 @@ import (
 	"postgresus-backend/internal/features/backups"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/disk"
-	"postgresus-backend/internal/features/healthcheck"
+	healthcheck_attempt "postgresus-backend/internal/features/healthcheck/attempt"
+	healthcheck_config "postgresus-backend/internal/features/healthcheck/config"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/restores"
 	"postgresus-backend/internal/features/storages"
+	system_healthcheck "postgresus-backend/internal/features/system/healthcheck"
 	"postgresus-backend/internal/features/users"
 	env_utils "postgresus-backend/internal/util/env"
 	files_utils "postgresus-backend/internal/util/files"
@@ -129,7 +131,9 @@ func setUpRoutes(r *gin.Engine) {
 	databaseController := databases.GetDatabaseController()
 	backupController := backups.GetBackupController()
 	restoreController := restores.GetRestoreController()
-	healthcheckController := healthcheck.GetHealthcheckController()
+	healthcheckController := system_healthcheck.GetHealthcheckController()
+	healthcheckConfigController := healthcheck_config.GetHealthcheckConfigController()
+	healthcheckAttemptController := healthcheck_attempt.GetHealthcheckAttemptController()
 	diskController := disk.GetDiskController()
 
 	downdetectContoller.RegisterRoutes(v1)
@@ -141,10 +145,13 @@ func setUpRoutes(r *gin.Engine) {
 	restoreController.RegisterRoutes(v1)
 	healthcheckController.RegisterRoutes(v1)
 	diskController.RegisterRoutes(v1)
+	healthcheckConfigController.RegisterRoutes(v1)
+	healthcheckAttemptController.RegisterRoutes(v1)
 }
 
 func setUpDependencies() {
 	backups.SetupDependencies()
+	healthcheck_config.SetupDependencies()
 }
 
 func runBackgroundTasks(log *slog.Logger) {
@@ -161,6 +168,10 @@ func runBackgroundTasks(log *slog.Logger) {
 
 	go runWithPanicLogging(log, "restore background service", func() {
 		restores.GetRestoreBackgroundService().Run()
+	})
+
+	go runWithPanicLogging(log, "healthcheck attempt background service", func() {
+		healthcheck_attempt.GetHealthcheckAttemptBackgroundService().RunBackgroundTasks()
 	})
 }
 

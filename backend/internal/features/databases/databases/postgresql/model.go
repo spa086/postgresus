@@ -70,15 +70,15 @@ func (p *PostgresqlDatabase) TestConnection(logger *slog.Logger) error {
 func testSingleDatabaseConnection(
 	logger *slog.Logger,
 	ctx context.Context,
-	p *PostgresqlDatabase,
+	postgresDb *PostgresqlDatabase,
 ) error {
 	// For single database backup, we need to connect to the specific database
-	if p.Database == nil || *p.Database == "" {
+	if postgresDb.Database == nil || *postgresDb.Database == "" {
 		return errors.New("database name is required for single database backup (pg_dump)")
 	}
 
 	// Build connection string for the specific database
-	connStr := buildConnectionStringForDB(p, *p.Database)
+	connStr := buildConnectionStringForDB(postgresDb, *postgresDb.Database)
 
 	// Test connection
 	conn, err := pgx.Connect(ctx, connStr)
@@ -87,7 +87,7 @@ func testSingleDatabaseConnection(
 		// - handle wrong creds
 		// - handle wrong database name
 		// - handle wrong protocol
-		return fmt.Errorf("failed to connect to database '%s': %w", *p.Database, err)
+		return fmt.Errorf("failed to connect to database '%s': %w", *postgresDb.Database, err)
 	}
 	defer func() {
 		if closeErr := conn.Close(ctx); closeErr != nil {
@@ -96,8 +96,12 @@ func testSingleDatabaseConnection(
 	}()
 
 	// Test if we can perform basic operations (like pg_dump would need)
-	if err := testBasicOperations(ctx, conn, *p.Database); err != nil {
-		return fmt.Errorf("basic operations test failed for database '%s': %w", *p.Database, err)
+	if err := testBasicOperations(ctx, conn, *postgresDb.Database); err != nil {
+		return fmt.Errorf(
+			"basic operations test failed for database '%s': %w",
+			*postgresDb.Database,
+			err,
+		)
 	}
 
 	return nil

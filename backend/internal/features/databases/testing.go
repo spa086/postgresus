@@ -1,9 +1,11 @@
 package databases
 
 import (
+	"postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/intervals"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
+	"postgresus-backend/internal/util/tools"
 
 	"github.com/google/uuid"
 )
@@ -26,6 +28,14 @@ func CreateTestDatabase(
 			TimeOfDay: &timeOfDay,
 		},
 
+		Postgresql: &postgresql.PostgresqlDatabase{
+			Version:  tools.PostgresqlVersion16,
+			Host:     "localhost",
+			Port:     5432,
+			Username: "postgres",
+			Password: "postgres",
+		},
+
 		StorageID: storage.ID,
 		Storage:   *storage,
 
@@ -44,4 +54,11 @@ func CreateTestDatabase(
 	}
 
 	return database
+}
+
+func RemoveTestDatabase(database *Database) {
+	err := databaseRepository.Delete(database.ID)
+	if err != nil {
+		panic(err)
+	}
 }

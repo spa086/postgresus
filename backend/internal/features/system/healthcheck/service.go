@@ -1,4 +1,4 @@
-package healthcheck
+package system_healthcheck
 
 import (
 	"errors"

@@ -2,6 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import { type Database, DatabaseType } from '../../../entity/databases';
+import { HealthStatus } from '../../../entity/databases/model/HealthStatus';
 import { getStorageLogoFromType } from '../../../entity/storages';
 import { getUserShortTimeFormat } from '../../../shared/time/getUserTimeFormat';
 
@@ -29,7 +30,21 @@ export const DatabaseCardComponent = ({
       className={`mb-3 cursor-pointer rounded p-3 shadow ${selectedDatabaseId === database.id ? 'bg-blue-100' : 'bg-white'}`}
       onClick={() => setSelectedDatabaseId(database.id)}
     >
-      <div className="mb-1 font-bold">{database.name}</div>
+      <div className="flex">
+        <div className="mb-1 font-bold">{database.name}</div>
+
+        {database.healthStatus && (
+          <div className="ml-auto pl-1">
+            <div
+              className={`rounded p-1 px-2 text-xs text-white ${
+                database.healthStatus === HealthStatus.AVAILABLE ? 'bg-green-500' : 'bg-red-500'
+              }`}
+            >
+              {database.healthStatus === HealthStatus.AVAILABLE ? 'Available' : 'Unavailable'}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="mb flex items-center">
         <div className="text-sm text-gray-500">Database type: {databaseType}</div>

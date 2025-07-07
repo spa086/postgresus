@@ -25,7 +25,7 @@ export function AuthNavbarComponent() {
           Community
         </a>
 
-        <div className='mt-1'>
+        <div className="mt-1">
           <GitHubButton
             href="https://github.com/RostislavDugin/postgresus"
             data-icon="octicon-star"

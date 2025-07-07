@@ -3,6 +3,7 @@ package databases
 import (
 	"errors"
 	"log/slog"
+	"postgresus-backend/internal/features/notifiers"
 	users_models "postgresus-backend/internal/features/users/models"
 	"time"
 
@@ -10,15 +11,24 @@ import (
 )
 
 type DatabaseService struct {
-	dbRepository            *DatabaseRepository
+	dbRepository    *DatabaseRepository
+	notifierService *notifiers.NotifierService
+	logger          *slog.Logger
+
 	dbStorageChangeListener DatabaseStorageChangeListener
-	logger                  *slog.Logger
+	dbCreationListener      []DatabaseCreationListener
 }
 
 func (s *DatabaseService) SetDatabaseStorageChangeListener(
 	dbStorageChangeListener DatabaseStorageChangeListener,
 ) {
 	s.dbStorageChangeListener = dbStorageChangeListener
+}
+
+func (s *DatabaseService) AddDbCreationListener(
+	dbCreationListener DatabaseCreationListener,
+) {
+	s.dbCreationListener = append(s.dbCreationListener, dbCreationListener)
 }
 
 func (s *DatabaseService) CreateDatabase(
@@ -31,9 +41,13 @@ func (s *DatabaseService) CreateDatabase(
 		return err
 	}
 
-	_, err := s.dbRepository.Save(database)
+	database, err := s.dbRepository.Save(database)
 	if err != nil {
 		return err
+	}
+
+	for _, listener := range s.dbCreationListener {
+		listener.OnDatabaseCreated(database.ID)
 	}
 
 	return nil
@@ -199,6 +213,24 @@ func (s *DatabaseService) SetLastBackupTime(databaseID uuid.UUID, backupTime tim
 
 	database.LastBackupTime = &backupTime
 	database.LastBackupErrorMessage = nil // Clear any previous error
+	_, err = s.dbRepository.Save(database)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *DatabaseService) SetHealthStatus(
+	databaseID uuid.UUID,
+	healthStatus *HealthStatus,
+) error {
+	database, err := s.dbRepository.FindByID(databaseID)
+	if err != nil {
+		return err
+	}
+
+	database.HealthStatus = healthStatus
 	_, err = s.dbRepository.Save(database)
 	if err != nil {
 		return err

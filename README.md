@@ -1,8 +1,8 @@
 <div align="center">
   <img src="assets/logo.svg" alt="Postgresus Logo" width="250"/>
   
-  <h3>PostgreSQL backup and restore tool</h3>
-  <p>Free, open source and self-hosted solution for automated PostgreSQL backups with multiple storage options and notifications</p>
+  <h3>PostgreSQL monitoring and backup</h3>
+  <p>Free, open source and self-hosted solution for automated PostgreSQL monitoring and backups with multiple storage options and notifications</p>
   
   <p>
     <a href="#-features">Features</a> •

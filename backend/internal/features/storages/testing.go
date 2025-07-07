@@ -21,3 +21,15 @@ func CreateTestStorage(userID uuid.UUID) *Storage {
 
 	return storage
 }
+
+func RemoveTestStorage(id uuid.UUID) {
+	storage, err := storageRepository.FindByID(id)
+	if err != nil {
+		panic(err)
+	}
+
+	err = storageRepository.Delete(storage)
+	if err != nil {
+		panic(err)
+	}
+}

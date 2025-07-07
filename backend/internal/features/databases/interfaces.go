@@ -17,3 +17,7 @@ type DatabaseConnector interface {
 type DatabaseStorageChangeListener interface {
 	OnBeforeDbStorageChange(dbID uuid.UUID, storageID uuid.UUID) error
 }
+
+type DatabaseCreationListener interface {
+	OnDatabaseCreated(databaseID uuid.UUID)
+}

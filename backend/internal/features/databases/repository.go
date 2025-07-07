@@ -117,7 +117,7 @@ func (r *DatabaseRepository) FindByUserID(userID uuid.UUID) ([]*Database, error)
 		Preload("Storage").
 		Preload("Notifiers").
 		Where("user_id = ?", userID).
-		Order("name ASC").
+		Order("CASE WHEN health_status = 'UNAVAILABLE' THEN 1 WHEN health_status = 'AVAILABLE' THEN 2 WHEN health_status IS NULL THEN 3 ELSE 4 END, name ASC").
 		Find(&databases).Error; err != nil {
 		return nil, err
 	}

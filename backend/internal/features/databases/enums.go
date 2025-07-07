@@ -60,3 +60,10 @@ const (
 	NotificationBackupFailed  BackupNotificationType = "BACKUP_FAILED"
 	NotificationBackupSuccess BackupNotificationType = "BACKUP_SUCCESS"
 )
+
+type HealthStatus string
+
+const (
+	HealthStatusAvailable   HealthStatus = "AVAILABLE"
+	HealthStatusUnavailable HealthStatus = "UNAVAILABLE"
+)

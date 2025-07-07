@@ -15,7 +15,7 @@ import (
 func Test_SaveNewStorage_StorageReturnedViaGet(t *testing.T) {
 	user := users.GetTestUser()
 	router := createRouter()
-	storage := createTestStorage(user.UserID)
+	storage := createNewStorage(user.UserID)
 
 	var savedStorage Storage
 	test_utils.MakePostRequestAndUnmarshal(
@@ -45,12 +45,14 @@ func Test_SaveNewStorage_StorageReturnedViaGet(t *testing.T) {
 	)
 
 	assert.Contains(t, storages, savedStorage)
+
+	RemoveTestStorage(savedStorage.ID)
 }
 
 func Test_UpdateExistingStorage_UpdatedStorageReturnedViaGet(t *testing.T) {
 	user := users.GetTestUser()
 	router := createRouter()
-	storage := createTestStorage(user.UserID)
+	storage := createNewStorage(user.UserID)
 
 	// Save initial storage
 	var savedStorage Storage
@@ -92,12 +94,14 @@ func Test_UpdateExistingStorage_UpdatedStorageReturnedViaGet(t *testing.T) {
 	)
 
 	assert.Contains(t, storages, updatedStorage)
+
+	RemoveTestStorage(updatedStorage.ID)
 }
 
 func Test_DeleteStorage_StorageNotReturnedViaGet(t *testing.T) {
 	user := users.GetTestUser()
 	router := createRouter()
-	storage := createTestStorage(user.UserID)
+	storage := createNewStorage(user.UserID)
 
 	// Save initial storage
 	var savedStorage Storage
@@ -129,7 +133,7 @@ func Test_DeleteStorage_StorageNotReturnedViaGet(t *testing.T) {
 func Test_TestDirectStorageConnection_ConnectionEstablished(t *testing.T) {
 	user := users.GetTestUser()
 	router := createRouter()
-	storage := createTestStorage(user.UserID)
+	storage := createNewStorage(user.UserID)
 
 	response := test_utils.MakePostRequest(
 		t, router, "/api/v1/storages/direct-test", user.Token, storage, http.StatusOK,
@@ -141,7 +145,7 @@ func Test_TestDirectStorageConnection_ConnectionEstablished(t *testing.T) {
 func Test_TestExistingStorageConnection_ConnectionEstablished(t *testing.T) {
 	user := users.GetTestUser()
 	router := createRouter()
-	storage := createTestStorage(user.UserID)
+	storage := createNewStorage(user.UserID)
 
 	var savedStorage Storage
 	test_utils.MakePostRequestAndUnmarshal(
@@ -159,11 +163,13 @@ func Test_TestExistingStorageConnection_ConnectionEstablished(t *testing.T) {
 	)
 
 	assert.Contains(t, string(response.Body), "successful")
+
+	RemoveTestStorage(savedStorage.ID)
 }
 
 func Test_CallAllMethodsWithoutAuth_UnauthorizedErrorReturned(t *testing.T) {
 	router := createRouter()
-	storage := createTestStorage(uuid.New())
+	storage := createNewStorage(uuid.New())
 
 	// Test endpoints without auth
 	endpoints := []struct {
@@ -207,7 +213,7 @@ func createRouter() *gin.Engine {
 	return router
 }
 
-func createTestStorage(userID uuid.UUID) *Storage {
+func createNewStorage(userID uuid.UUID) *Storage {
 	return &Storage{
 		UserID:       userID,
 		Type:         StorageTypeLocal,

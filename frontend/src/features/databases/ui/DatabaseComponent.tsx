@@ -7,6 +7,11 @@ import { type Database, databaseApi } from '../../../entity/databases';
 import { ToastHelper } from '../../../shared/toast';
 import { ConfirmationComponent } from '../../../shared/ui';
 import { BackupsComponent } from '../../backups';
+import {
+  EditHealthcheckConfigComponent,
+  HealthckeckAttemptsComponent,
+  ShowHealthcheckConfigComponent,
+} from '../../healthcheck';
 import { EditDatabaseBaseInfoComponent } from './edit/EditDatabaseBaseInfoComponent';
 import { EditDatabaseNotifiersComponent } from './edit/EditDatabaseNotifiersComponent';
 import { EditDatabaseSpecificDataComponent } from './edit/EditDatabaseSpecificDataComponent';
@@ -37,6 +42,7 @@ export const DatabaseComponent = ({
     useState(false);
   const [isEditStorageSettings, setIsEditStorageSettings] = useState(false);
   const [isEditNotifiersSettings, setIsEditNotifiersSettings] = useState(false);
+  const [isEditHealthcheckSettings, setIsEditHealthcheckSettings] = useState(false);
 
   const [editDatabase, setEditDatabase] = useState<Database | undefined>();
   const [isNameUnsaved, setIsNameUnsaved] = useState(false);
@@ -89,13 +95,16 @@ export const DatabaseComponent = ({
       });
   };
 
-  const startEdit = (type: 'name' | 'settings' | 'database' | 'storage' | 'notifiers') => {
+  const startEdit = (
+    type: 'name' | 'settings' | 'database' | 'storage' | 'notifiers' | 'healthcheck',
+  ) => {
     setEditDatabase(JSON.parse(JSON.stringify(database)));
     setIsEditName(type === 'name');
     setIsEditBaseSettings(type === 'settings');
     setIsEditDatabaseSpecificDataSettings(type === 'database');
     setIsEditStorageSettings(type === 'storage');
     setIsEditNotifiersSettings(type === 'notifiers');
+    setIsEditHealthcheckSettings(type === 'healthcheck');
     setIsNameUnsaved(false);
   };
 
@@ -364,6 +373,39 @@ export const DatabaseComponent = ({
               </div>
             </div>
 
+            <div className="flex flex-wrap gap-10">
+              <div className="w-[350px]">
+                <div className="mt-5 flex items-center font-bold">
+                  <div>Healthcheck settings</div>
+
+                  {!isEditHealthcheckSettings ? (
+                    <div
+                      className="ml-2 h-4 w-4 cursor-pointer"
+                      onClick={() => startEdit('healthcheck')}
+                    >
+                      <img src="/icons/pen-gray.svg" />
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+
+                <div className="mt-1 text-sm">
+                  {isEditHealthcheckSettings ? (
+                    <EditHealthcheckConfigComponent
+                      databaseId={database.id}
+                      onClose={() => {
+                        setIsEditHealthcheckSettings(false);
+                        loadSettings();
+                      }}
+                    />
+                  ) : (
+                    <ShowHealthcheckConfigComponent databaseId={database.id} />
+                  )}
+                </div>
+              </div>
+            </div>
+
             {!isEditDatabaseSpecificDataSettings && (
               <div className="mt-10">
                 <Button
@@ -401,6 +443,10 @@ export const DatabaseComponent = ({
             actionButtonColor="red"
           />
         )}
+      </div>
+
+      <div className="mt-5 w-full rounded bg-white p-5 shadow">
+        {database && <HealthckeckAttemptsComponent database={database} />}
       </div>
 
       <div className="mt-5 w-full rounded bg-white p-5 shadow">
