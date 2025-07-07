@@ -2,6 +2,7 @@ package healthcheck_attempt
 
 import (
 	"log/slog"
+	"postgresus-backend/internal/config"
 	healthcheck_config "postgresus-backend/internal/features/healthcheck/config"
 	"time"
 )
@@ -19,6 +20,10 @@ func (s *HealthcheckAttemptBackgroundService) RunBackgroundTasks() {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 	for range ticker.C {
+		if config.IsShouldShutdown() {
+			break
+		}
+
 		s.checkDatabases()
 	}
 }

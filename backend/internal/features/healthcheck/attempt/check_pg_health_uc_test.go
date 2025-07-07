@@ -229,8 +229,8 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 				t,
 				"SendNotification",
 				mock.Anything,
-				fmt.Sprintf("❌ DB [%s] is unavailable", database.Name),
-				fmt.Sprintf("❌ The [%s] database is currently unavailable", database.Name),
+				fmt.Sprintf("❌ [%s] DB is unavailable", database.Name),
+				fmt.Sprintf("❌ [%s] Database is currently unavailable", database.Name),
 			)
 		},
 	)
