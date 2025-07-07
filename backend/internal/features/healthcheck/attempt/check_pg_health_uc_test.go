@@ -2,6 +2,7 @@ package healthcheck_attempt
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -84,8 +85,8 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 			t,
 			"SendNotification",
 			mock.Anything,
-			"❌ Database is unavailable",
-			"❌ The database is currently unavailable",
+			fmt.Sprintf("❌ DB [%s] is unavailable", database.Name),
+			fmt.Sprintf("❌ The [%s] database is currently unavailable", database.Name),
 		)
 	})
 
@@ -149,8 +150,8 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 				t,
 				"SendNotification",
 				mock.Anything,
-				"❌ Database is unavailable",
-				"❌ The database is currently unavailable",
+				fmt.Sprintf("❌ DB [%s] is unavailable", database.Name),
+				fmt.Sprintf("❌ The [%s] database is currently unavailable", database.Name),
 			)
 		},
 	)
@@ -228,8 +229,8 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 				t,
 				"SendNotification",
 				mock.Anything,
-				"❌ Database is unavailable",
-				"❌ The database is currently unavailable",
+				fmt.Sprintf("❌ DB [%s] is unavailable", database.Name),
+				fmt.Sprintf("❌ The [%s] database is currently unavailable", database.Name),
 			)
 		},
 	)
@@ -301,8 +302,8 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 			t,
 			"SendNotification",
 			mock.Anything,
-			"✅ Database is back online",
-			"✅ The database is back online after being unavailable",
+			fmt.Sprintf("✅ DB [%s] is back online", database.Name),
+			fmt.Sprintf("✅ The [%s] database is back online after being unavailable", database.Name),
 		)
 	})
 

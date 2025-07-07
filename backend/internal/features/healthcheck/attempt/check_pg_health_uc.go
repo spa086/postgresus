@@ -225,11 +225,11 @@ func (uc *CheckPgHealthUseCase) sendDbStatusNotification(
 	messageBody := ""
 
 	if newHealthStatus == databases.HealthStatusAvailable {
-		messageTitle = "✅ Database is back online"
-		messageBody = "✅ The database is back online after being unavailable"
+		messageTitle = fmt.Sprintf("✅ DB [%s] is back online", database.Name)
+		messageBody = fmt.Sprintf("✅ The [%s] database is back online after being unavailable", database.Name)
 	} else {
-		messageTitle = "❌ Database is unavailable"
-		messageBody = "❌ The database is currently unavailable"
+		messageTitle = fmt.Sprintf("❌ DB [%s] is unavailable", database.Name)
+		messageBody = fmt.Sprintf("❌ The [%s] database is currently unavailable", database.Name)
 	}
 
 	for _, notifier := range database.Notifiers {
