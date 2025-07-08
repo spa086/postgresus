@@ -36,7 +36,7 @@ export const DatabaseCardComponent = ({
         {database.healthStatus && (
           <div className="ml-auto pl-1">
             <div
-              className={`rounded p-1 px-2 text-xs text-white ${
+              className={`rounded px-[6px] py-[2px] text-[10px] text-white ${
                 database.healthStatus === HealthStatus.AVAILABLE ? 'bg-green-500' : 'bg-red-500'
               }`}
             >

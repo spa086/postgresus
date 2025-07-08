@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Database } from '../../../entity/databases';
 import { HealthStatus } from '../../../entity/databases/model/HealthStatus';
 import { type HealthcheckAttempt, healthcheckAttemptApi } from '../../../entity/healthcheck';
+import { getUserShortTimeFormat } from '../../../shared/time/getUserTimeFormat';
 
 interface Props {
   database: Database;
@@ -115,7 +116,7 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
             healthcheckAttempts.map((healthcheckAttempt) => (
               <Tooltip
                 key={healthcheckAttempt.createdAt.toString()}
-                title={`${dayjs(healthcheckAttempt.createdAt).format('DD.MM.YYYY HH:mm')} (${dayjs(healthcheckAttempt.createdAt).fromNow()})`}
+                title={`${dayjs(healthcheckAttempt.createdAt).format(getUserShortTimeFormat().format)} (${dayjs(healthcheckAttempt.createdAt).fromNow()})`}
               >
                 <div
                   className={`h-[8px] w-[8px] cursor-pointer rounded-[2px] ${

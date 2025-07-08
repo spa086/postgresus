@@ -18,6 +18,6 @@ export const getUserShortTimeFormat = () => {
 
   return {
     use12Hours: is12Hour,
-    format: is12Hour ? 'DD.MM.YYYY h:mm A' : 'DD.MM.YYYY HH:mm',
+    format: is12Hour ? 'DD MMM YYYY h:mm A' : 'DD MMM YYYY HH:mm',
   };
 };
