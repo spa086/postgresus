@@ -3,16 +3,19 @@ package backups
 import (
 	"log/slog"
 	"postgresus-backend/internal/config"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/storages"
+	"postgresus-backend/internal/util/period"
 	"time"
 )
 
 type BackupBackgroundService struct {
-	backupService    *BackupService
-	backupRepository *BackupRepository
-	databaseService  *databases.DatabaseService
-	storageService   *storages.StorageService
+	backupService       *BackupService
+	backupRepository    *BackupRepository
+	databaseService     *databases.DatabaseService
+	storageService      *storages.StorageService
+	backupConfigService *backups_config.BackupConfigService
 
 	lastBackupTime time.Time
 	logger         *slog.Logger
@@ -60,15 +63,21 @@ func (s *BackupBackgroundService) failBackupsInProgress() error {
 	}
 
 	for _, backup := range backupsInProgress {
+		backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(backup.DatabaseID)
+		if err != nil {
+			s.logger.Error("Failed to get backup config by database ID", "error", err)
+			continue
+		}
+
 		failMessage := "Backup failed due to application restart"
 		backup.FailMessage = &failMessage
 		backup.Status = BackupStatusFailed
 		backup.BackupSizeMb = 0
 
 		s.backupService.SendBackupNotification(
-			backup.Database,
+			backupConfig,
 			backup,
-			databases.NotificationBackupFailed,
+			backups_config.NotificationBackupFailed,
 			&failMessage,
 		)
 
@@ -87,9 +96,15 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 	}
 
 	for _, database := range allDatabases {
-		backupStorePeriod := database.StorePeriod
+		backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(database.ID)
+		if err != nil {
+			s.logger.Error("Failed to get backup config by database ID", "error", err)
+			continue
+		}
 
-		if backupStorePeriod == databases.PeriodForever {
+		backupStorePeriod := backupConfig.StorePeriod
+
+		if backupStorePeriod == period.PeriodForever {
 			continue
 		}
 
@@ -148,7 +163,13 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 	}
 
 	for _, database := range allDatabases {
-		if database.BackupInterval == nil {
+		backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(database.ID)
+		if err != nil {
+			s.logger.Error("Failed to get backup config by database ID", "error", err)
+			continue
+		}
+
+		if backupConfig.BackupInterval == nil {
 			continue
 		}
 
@@ -169,13 +190,13 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 			lastBackupTime = &lastBackup.CreatedAt
 		}
 
-		if database.BackupInterval.ShouldTriggerBackup(time.Now().UTC(), lastBackupTime) {
+		if backupConfig.BackupInterval.ShouldTriggerBackup(time.Now().UTC(), lastBackupTime) {
 			s.logger.Info(
 				"Triggering scheduled backup",
 				"databaseId",
 				database.ID,
 				"intervalType",
-				database.BackupInterval.Interval,
+				backupConfig.BackupInterval.Interval,
 			)
 
 			go s.backupService.MakeBackup(database.ID)

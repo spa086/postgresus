@@ -2,7 +2,6 @@ import { Button, Modal, Select, Spin } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { type Database, databaseApi } from '../../../../entity/databases';
-import { BackupNotificationType } from '../../../../entity/databases/model/BackupNotificationType';
 import { type Notifier, notifierApi } from '../../../../entity/notifiers';
 import { EditNotifierComponent } from '../../../notifiers/ui/edit/EditNotifierComponent';
 
@@ -97,35 +96,6 @@ export const EditDatabaseNotifiersComponent = ({
         <br />
         <br />
         You can select several notifiers, notifications will be sent to all of them.
-      </div>
-
-      <div className="mb-1 flex w-full items-center">
-        <div className="min-w-[150px]">Sent notification when</div>
-
-        <Select
-          mode="multiple"
-          value={editingDatabase.sendNotificationsOn}
-          onChange={(sendNotificationsOn) => {
-            setEditingDatabase({
-              ...editingDatabase,
-              sendNotificationsOn,
-            } as unknown as Database);
-
-            setIsUnsaved(true);
-          }}
-          size="small"
-          className="max-w-[200px] grow"
-          options={[
-            {
-              label: 'Backup failed',
-              value: BackupNotificationType.BACKUP_FAILED,
-            },
-            {
-              label: 'Backup success',
-              value: BackupNotificationType.BACKUP_SUCCESS,
-            },
-          ]}
-        />
       </div>
 
       <div className="mb-5 flex w-full items-center">

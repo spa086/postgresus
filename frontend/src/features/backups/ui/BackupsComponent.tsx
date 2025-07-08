@@ -6,12 +6,12 @@ import {
   InfoCircleOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { Button, Modal, Table, Tooltip } from 'antd';
+import { Button, Modal, Spin, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
-import { type Backup, BackupStatus, backupsApi } from '../../../entity/backups';
+import { type Backup, BackupStatus, backupConfigApi, backupsApi } from '../../../entity/backups';
 import type { Database } from '../../../entity/databases';
 import { getUserTimeFormat } from '../../../shared/time';
 import { ConfirmationComponent } from '../../../shared/ui';
@@ -22,8 +22,11 @@ interface Props {
 }
 
 export const BackupsComponent = ({ database }: Props) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isBackupsLoading, setIsBackupsLoading] = useState(false);
   const [backups, setBackups] = useState<Backup[]>([]);
+
+  const [isBackupConfigLoading, setIsBackupConfigLoading] = useState(false);
+  const [isShowBackupConfig, setIsShowBackupConfig] = useState(false);
 
   const [isMakeBackupRequestLoading, setIsMakeBackupRequestLoading] = useState(false);
 
@@ -86,11 +89,26 @@ export const BackupsComponent = ({ database }: Props) => {
   };
 
   useEffect(() => {
-    setIsLoading(true);
-    loadBackups().then(() => setIsLoading(false));
+    let isBackupsEnabled = false;
+
+    setIsBackupConfigLoading(true);
+    backupConfigApi.getBackupConfigByDbID(database.id).then((backupConfig) => {
+      setIsBackupConfigLoading(false);
+
+      if (backupConfig.isBackupsEnabled) {
+        // load backups
+        isBackupsEnabled = true;
+        setIsShowBackupConfig(true);
+
+        setIsBackupsLoading(true);
+        loadBackups().then(() => setIsBackupsLoading(false));
+      }
+    });
 
     const interval = setInterval(() => {
-      loadBackups();
+      if (isBackupsEnabled) {
+        loadBackups();
+      }
     }, 1_000);
 
     return () => clearInterval(interval);
@@ -264,8 +282,20 @@ export const BackupsComponent = ({ database }: Props) => {
     },
   ];
 
+  if (isBackupConfigLoading) {
+    return (
+      <div className="mb-5 flex items-center">
+        <Spin />
+      </div>
+    );
+  }
+
+  if (!isShowBackupConfig) {
+    return <div />;
+  }
+
   return (
-    <div>
+    <div className="mt-5 w-full rounded bg-white p-5 shadow">
       <h2 className="text-xl font-bold">Backups</h2>
 
       <div className="mt-5" />
@@ -288,7 +318,7 @@ export const BackupsComponent = ({ database }: Props) => {
           columns={columns}
           dataSource={backups}
           rowKey="id"
-          loading={isLoading}
+          loading={isBackupsLoading}
           size="small"
           pagination={false}
         />

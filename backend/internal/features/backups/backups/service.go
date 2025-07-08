@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
@@ -15,58 +16,40 @@ import (
 )
 
 type BackupService struct {
-	databaseService    *databases.DatabaseService
-	storageService     *storages.StorageService
-	backupRepository   *BackupRepository
-	notifierService    *notifiers.NotifierService
-	notificationSender NotificationSender
+	databaseService     *databases.DatabaseService
+	storageService      *storages.StorageService
+	backupRepository    *BackupRepository
+	notifierService     *notifiers.NotifierService
+	notificationSender  NotificationSender
+	backupConfigService *backups_config.BackupConfigService
 
 	createBackupUseCase CreateBackupUsecase
 
 	logger *slog.Logger
+
+	backupRemoveListeners []BackupRemoveListener
 }
 
-func (s *BackupService) OnBeforeDbStorageChange(
+func (s *BackupService) AddBackupRemoveListener(listener BackupRemoveListener) {
+	s.backupRemoveListeners = append(s.backupRemoveListeners, listener)
+}
+
+func (s *BackupService) OnBeforeBackupsStorageChange(
 	databaseID uuid.UUID,
 	storageID uuid.UUID,
 ) error {
-	// validate no backups in progress
-	backups, err := s.backupRepository.FindByStorageIdAndStatus(
-		storageID,
-		BackupStatusInProgress,
-	)
+	err := s.deleteDbBackups(databaseID)
 	if err != nil {
 		return err
 	}
 
-	if len(backups) > 0 {
-		return errors.New("backup is in progress, storage cannot")
-	}
+	return nil
+}
 
-	backupsWithStorage, err := s.backupRepository.FindByStorageIdAndStatus(
-		storageID,
-		BackupStatusCompleted,
-	)
+func (s *BackupService) OnBeforeDatabaseRemove(databaseID uuid.UUID) error {
+	err := s.deleteDbBackups(databaseID)
 	if err != nil {
 		return err
-	}
-
-	if len(backupsWithStorage) > 0 {
-		for _, backup := range backupsWithStorage {
-			if err := backup.Storage.DeleteFile(backup.ID); err != nil {
-				// most likely we cannot do nothing with this,
-				// so we just remove the backup model
-				s.logger.Error("Failed to delete backup file", "error", err)
-			}
-
-			if err := s.backupRepository.DeleteByID(backup.ID); err != nil {
-				return err
-			}
-		}
-
-		// we repeat remove for the case if backup
-		// started until we removed all previous backups
-		return s.OnBeforeDbStorageChange(databaseID, storageID)
 	}
 
 	return nil
@@ -128,10 +111,7 @@ func (s *BackupService) DeleteBackup(
 		return errors.New("backup is in progress")
 	}
 
-	backup.DeleteBackupFromStorage(s.logger)
-
-	backup.Status = BackupStatusDeleted
-	return s.backupRepository.Save(backup)
+	return s.deleteBackup(backup)
 }
 
 func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
@@ -152,7 +132,23 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 		return
 	}
 
-	storage, err := s.storageService.GetStorageByID(database.StorageID)
+	backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(databaseID)
+	if err != nil {
+		s.logger.Error("Failed to get backup config by database ID", "error", err)
+		return
+	}
+
+	if !backupConfig.IsBackupsEnabled {
+		s.logger.Info("Backups are not enabled for this database")
+		return
+	}
+
+	if backupConfig.StorageID == nil {
+		s.logger.Error("Backup config storage ID is not defined")
+		return
+	}
+
+	storage, err := s.storageService.GetStorageByID(*backupConfig.StorageID)
 	if err != nil {
 		s.logger.Error("Failed to get storage by ID", "error", err)
 		return
@@ -192,6 +188,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 
 	err = s.createBackupUseCase.Execute(
 		backup.ID,
+		backupConfig,
 		database,
 		storage,
 		backupProgressListener,
@@ -218,9 +215,9 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 		}
 
 		s.SendBackupNotification(
-			database,
+			backupConfig,
 			backup,
-			databases.NotificationBackupFailed,
+			backups_config.NotificationBackupFailed,
 			&errMsg,
 		)
 
@@ -248,27 +245,27 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 	}
 
 	s.SendBackupNotification(
-		database,
+		backupConfig,
 		backup,
-		databases.NotificationBackupSuccess,
+		backups_config.NotificationBackupSuccess,
 		nil,
 	)
 }
 
 func (s *BackupService) SendBackupNotification(
-	db *databases.Database,
+	backupConfig *backups_config.BackupConfig,
 	backup *Backup,
-	notificationType databases.BackupNotificationType,
+	notificationType backups_config.BackupNotificationType,
 	errorMessage *string,
 ) {
-	database, err := s.databaseService.GetDatabaseByID(db.ID)
+	database, err := s.databaseService.GetDatabaseByID(backupConfig.DatabaseID)
 	if err != nil {
 		return
 	}
 
 	for _, notifier := range database.Notifiers {
 		if !slices.Contains(
-			database.SendNotificationsOn,
+			backupConfig.SendNotificationsOn,
 			notificationType,
 		) {
 			continue
@@ -276,9 +273,9 @@ func (s *BackupService) SendBackupNotification(
 
 		title := ""
 		switch notificationType {
-		case databases.NotificationBackupFailed:
+		case backups_config.NotificationBackupFailed:
 			title = fmt.Sprintf("❌ Backup failed for database \"%s\"", database.Name)
-		case databases.NotificationBackupSuccess:
+		case backups_config.NotificationBackupSuccess:
 			title = fmt.Sprintf("✅ Backup completed for database \"%s\"", database.Name)
 		}
 
@@ -318,4 +315,46 @@ func (s *BackupService) SendBackupNotification(
 
 func (s *BackupService) GetBackup(backupID uuid.UUID) (*Backup, error) {
 	return s.backupRepository.FindByID(backupID)
+}
+
+func (s *BackupService) deleteBackup(backup *Backup) error {
+	for _, listener := range s.backupRemoveListeners {
+		if err := listener.OnBeforeBackupRemove(backup); err != nil {
+			return err
+		}
+	}
+
+	backup.DeleteBackupFromStorage(s.logger)
+
+	return s.backupRepository.DeleteByID(backup.ID)
+}
+
+func (s *BackupService) deleteDbBackups(databaseID uuid.UUID) error {
+	dbBackupsInProgress, err := s.backupRepository.FindByDatabaseIdAndStatus(
+		databaseID,
+		BackupStatusInProgress,
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(dbBackupsInProgress) > 0 {
+		return errors.New("backup is in progress, storage cannot be removed")
+	}
+
+	dbBackups, err := s.backupRepository.FindByDatabaseID(
+		databaseID,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, dbBackup := range dbBackups {
+		err := s.deleteBackup(dbBackup)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -2,7 +2,6 @@ package databases
 
 import (
 	"postgresus-backend/internal/features/databases/databases/postgresql"
-	"postgresus-backend/internal/features/intervals"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/util/tools"
@@ -15,18 +14,10 @@ func CreateTestDatabase(
 	storage *storages.Storage,
 	notifier *notifiers.Notifier,
 ) *Database {
-	timeOfDay := "16:00"
-
 	database := &Database{
-		UserID:      userID,
-		Name:        "test " + uuid.New().String(),
-		Type:        DatabaseTypePostgres,
-		StorePeriod: PeriodDay,
-
-		BackupInterval: &intervals.Interval{
-			Interval:  intervals.IntervalDaily,
-			TimeOfDay: &timeOfDay,
-		},
+		UserID: userID,
+		Name:   "test " + uuid.New().String(),
+		Type:   DatabaseTypePostgres,
 
 		Postgresql: &postgresql.PostgresqlDatabase{
 			Version:  tools.PostgresqlVersion16,
@@ -36,15 +27,8 @@ func CreateTestDatabase(
 			Password: "postgres",
 		},
 
-		StorageID: storage.ID,
-		Storage:   *storage,
-
 		Notifiers: []notifiers.Notifier{
 			*notifier,
-		},
-		SendNotificationsOn: []BackupNotificationType{
-			NotificationBackupFailed,
-			NotificationBackupSuccess,
 		},
 	}
 

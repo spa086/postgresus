@@ -3,7 +3,7 @@ import { Button, Input, Spin } from 'antd';
 import { useState } from 'react';
 import { useEffect } from 'react';
 
-import { databaseApi } from '../../entity/databases';
+import { backupConfigApi } from '../../entity/backups';
 import { storageApi } from '../../entity/storages';
 import type { Storage } from '../../entity/storages';
 import { ToastHelper } from '../../shared/toast';
@@ -63,7 +63,7 @@ export const StorageComponent = ({ storageId, onStorageChanged, onStorageDeleted
     setIsRemoving(true);
 
     try {
-      const isStorageUsing = await databaseApi.isStorageUsing(storage.id);
+      const isStorageUsing = await backupConfigApi.isStorageUsing(storage.id);
       if (isStorageUsing) {
         alert('Storage is used by some databases. Please remove the storage from databases first.');
         setIsShowRemoveConfirm(false);
@@ -260,7 +260,7 @@ export const StorageComponent = ({ storageId, onStorageChanged, onStorageDeleted
           <ConfirmationComponent
             onConfirm={remove}
             onDecline={() => setIsShowRemoveConfirm(false)}
-            description="Are you sure you want to remove this storage? This action cannot be undone."
+            description="Are you sure you want to remove this storage? This action cannot be undone. If some backups are using this storage, they will be removed too."
             actionText="Remove"
             actionButtonColor="red"
           />

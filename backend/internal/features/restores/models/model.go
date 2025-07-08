@@ -1,7 +1,7 @@
 package models
 
 import (
-	"postgresus-backend/internal/features/backups"
+	"postgresus-backend/internal/features/backups/backups"
 	"postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/restores/enums"
 	"time"

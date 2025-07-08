@@ -5,14 +5,17 @@ import (
 	"os"
 	"path/filepath"
 	"postgresus-backend/internal/config"
-	"postgresus-backend/internal/features/backups"
-	usecases_postgresql_backup "postgresus-backend/internal/features/backups/usecases/postgresql"
+	"postgresus-backend/internal/features/backups/backups"
+	usecases_postgresql_backup "postgresus-backend/internal/features/backups/backups/usecases/postgresql"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
+	"postgresus-backend/internal/features/intervals"
 	"postgresus-backend/internal/features/restores/models"
 	usecases_postgresql_restore "postgresus-backend/internal/features/restores/usecases/postgresql"
 	"postgresus-backend/internal/features/storages"
 	local_storage "postgresus-backend/internal/features/storages/models/local"
+	"postgresus-backend/internal/util/period"
 	"postgresus-backend/internal/util/tools"
 	"strconv"
 	"testing"
@@ -99,7 +102,7 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
 	backupID := uuid.New()
 	pgVersionEnum := tools.GetPostgresqlVersionEnum(pgVersion)
 
-	backupDbConfig := &databases.Database{
+	backupDb := &databases.Database{
 		ID:   uuid.New(),
 		Type: databases.DatabaseTypePostgres,
 		Name: "Test Database",
@@ -111,8 +114,17 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
 			Password: container.Password,
 			Database: &container.Database,
 			IsHttps:  false,
-			CpuCount: 1,
 		},
+	}
+
+	storageID := uuid.New()
+	backupConfig := &backups_config.BackupConfig{
+		DatabaseID:       backupDb.ID,
+		IsBackupsEnabled: true,
+		StorePeriod:      period.PeriodDay,
+		BackupInterval:   &intervals.Interval{Interval: intervals.IntervalDaily},
+		StorageID:        &storageID,
+		CpuCount:         1,
 	}
 
 	storage := &storages.Storage{
@@ -126,7 +138,8 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
 	progressTracker := func(completedMBs float64) {}
 	err = usecases_postgresql_backup.GetCreatePostgresqlBackupUsecase().Execute(
 		backupID,
-		backupDbConfig,
+		backupConfig,
+		backupDb,
 		storage,
 		progressTracker,
 	)
@@ -150,12 +163,12 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
 	// Setup data for restore
 	completedBackup := &backups.Backup{
 		ID:         backupID,
-		DatabaseID: backupDbConfig.ID,
+		DatabaseID: backupDb.ID,
 		StorageID:  storage.ID,
 		Status:     backups.BackupStatusCompleted,
 		CreatedAt:  time.Now().UTC(),
 		Storage:    storage,
-		Database:   backupDbConfig,
+		Database:   backupDb,
 	}
 
 	restoreID := uuid.New()
@@ -170,13 +183,12 @@ func testBackupRestoreForVersion(t *testing.T, pgVersion string, port string) {
 			Password: container.Password,
 			Database: &newDBName,
 			IsHttps:  false,
-			CpuCount: 1,
 		},
 	}
 
 	// Restore the backup
 	restoreBackupUC := usecases_postgresql_restore.GetRestorePostgresqlBackupUsecase()
-	err = restoreBackupUC.Execute(restore, completedBackup, storage)
+	err = restoreBackupUC.Execute(backupConfig, restore, completedBackup, storage)
 	assert.NoError(t, err)
 
 	// Verify restored table exists

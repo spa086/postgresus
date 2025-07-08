@@ -11,6 +11,4 @@ export interface PostgresqlDatabase {
   password: string;
   database?: string;
   isHttps: boolean;
-
-  cpuCount: number;
 }

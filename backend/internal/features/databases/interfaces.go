@@ -14,10 +14,10 @@ type DatabaseConnector interface {
 	TestConnection(logger *slog.Logger) error
 }
 
-type DatabaseStorageChangeListener interface {
-	OnBeforeDbStorageChange(dbID uuid.UUID, storageID uuid.UUID) error
-}
-
 type DatabaseCreationListener interface {
 	OnDatabaseCreated(databaseID uuid.UUID)
+}
+
+type DatabaseRemoveListener interface {
+	OnBeforeDatabaseRemove(databaseID uuid.UUID) error
 }

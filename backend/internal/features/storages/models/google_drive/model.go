@@ -38,17 +38,32 @@ func (s *GoogleDriveStorage) SaveFile(
 		ctx := context.Background()
 		filename := fileID.String()
 
+		// Ensure the postgresus_backups folder exists
+		folderID, err := s.ensureBackupsFolderExists(ctx, driveService)
+		if err != nil {
+			return fmt.Errorf("failed to create/find backups folder: %w", err)
+		}
+
 		// Delete any previous copy so we keep at most one object per logical file.
-		_ = s.deleteByName(ctx, driveService, filename) // ignore "not found"
+		_ = s.deleteByName(ctx, driveService, filename, folderID) // ignore "not found"
 
-		fileMeta := &drive.File{Name: filename}
+		fileMeta := &drive.File{
+			Name:    filename,
+			Parents: []string{folderID},
+		}
 
-		_, err := driveService.Files.Create(fileMeta).Media(file).Context(ctx).Do()
+		_, err = driveService.Files.Create(fileMeta).Media(file).Context(ctx).Do()
 		if err != nil {
 			return fmt.Errorf("failed to upload file to Google Drive: %w", err)
 		}
 
-		logger.Info("file uploaded to Google Drive", "name", filename)
+		logger.Info(
+			"file uploaded to Google Drive",
+			"name",
+			filename,
+			"folder",
+			"postgresus_backups",
+		)
 		return nil
 	})
 }
@@ -56,7 +71,12 @@ func (s *GoogleDriveStorage) SaveFile(
 func (s *GoogleDriveStorage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
 	var result io.ReadCloser
 	err := s.withRetryOnAuth(func(driveService *drive.Service) error {
-		fileIDGoogle, err := s.lookupFileID(driveService, fileID.String())
+		folderID, err := s.findBackupsFolder(driveService)
+		if err != nil {
+			return fmt.Errorf("failed to find backups folder: %w", err)
+		}
+
+		fileIDGoogle, err := s.lookupFileID(driveService, fileID.String(), folderID)
 		if err != nil {
 			return err
 		}
@@ -76,7 +96,12 @@ func (s *GoogleDriveStorage) GetFile(fileID uuid.UUID) (io.ReadCloser, error) {
 func (s *GoogleDriveStorage) DeleteFile(fileID uuid.UUID) error {
 	return s.withRetryOnAuth(func(driveService *drive.Service) error {
 		ctx := context.Background()
-		return s.deleteByName(ctx, driveService, fileID.String())
+		folderID, err := s.findBackupsFolder(driveService)
+		if err != nil {
+			return fmt.Errorf("failed to find backups folder: %w", err)
+		}
+
+		return s.deleteByName(ctx, driveService, fileID.String(), folderID)
 	})
 }
 
@@ -109,8 +134,17 @@ func (s *GoogleDriveStorage) TestConnection() error {
 		testFilename := "test-connection-" + uuid.New().String()
 		testData := []byte("test")
 
+		// Ensure the postgresus_backups folder exists
+		folderID, err := s.ensureBackupsFolderExists(ctx, driveService)
+		if err != nil {
+			return fmt.Errorf("failed to create/find backups folder: %w", err)
+		}
+
 		// Test write operation
-		fileMeta := &drive.File{Name: testFilename}
+		fileMeta := &drive.File{
+			Name:    testFilename,
+			Parents: []string{folderID},
+		}
 		file, err := driveService.Files.Create(fileMeta).
 			Media(strings.NewReader(string(testData))).
 			Context(ctx).
@@ -358,8 +392,13 @@ func (s *GoogleDriveStorage) getDriveService() (*drive.Service, error) {
 func (s *GoogleDriveStorage) lookupFileID(
 	driveService *drive.Service,
 	name string,
+	folderID string,
 ) (string, error) {
-	query := fmt.Sprintf("name = '%s' and trashed = false", escapeForQuery(name))
+	query := fmt.Sprintf(
+		"name = '%s' and trashed = false and '%s' in parents",
+		escapeForQuery(name),
+		folderID,
+	)
 
 	results, err := driveService.Files.List().
 		Q(query).
@@ -371,7 +410,7 @@ func (s *GoogleDriveStorage) lookupFileID(
 	}
 
 	if len(results.Files) == 0 {
-		return "", fmt.Errorf("file %q not found in Google Drive", name)
+		return "", fmt.Errorf("file %q not found in Google Drive backups folder", name)
 	}
 
 	return results.Files[0].Id, nil
@@ -381,8 +420,13 @@ func (s *GoogleDriveStorage) deleteByName(
 	ctx context.Context,
 	driveService *drive.Service,
 	name string,
+	folderID string,
 ) error {
-	query := fmt.Sprintf("name = '%s' and trashed = false", escapeForQuery(name))
+	query := fmt.Sprintf(
+		"name = '%s' and trashed = false and '%s' in parents",
+		escapeForQuery(name),
+		folderID,
+	)
 
 	err := driveService.
 		Files.
@@ -408,4 +452,48 @@ func (s *GoogleDriveStorage) deleteByName(
 
 func escapeForQuery(s string) string {
 	return strings.ReplaceAll(s, `'`, `\'`)
+}
+
+// ensureBackupsFolderExists creates the postgresus_backups folder if it doesn't exist
+func (s *GoogleDriveStorage) ensureBackupsFolderExists(
+	ctx context.Context,
+	driveService *drive.Service,
+) (string, error) {
+	folderID, err := s.findBackupsFolder(driveService)
+	if err == nil {
+		return folderID, nil
+	}
+
+	// Folder doesn't exist, create it
+	folderMeta := &drive.File{
+		Name:     "postgresus_backups",
+		MimeType: "application/vnd.google-apps.folder",
+	}
+
+	folder, err := driveService.Files.Create(folderMeta).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to create postgresus_backups folder: %w", err)
+	}
+
+	return folder.Id, nil
+}
+
+// findBackupsFolder finds the postgresus_backups folder ID
+func (s *GoogleDriveStorage) findBackupsFolder(driveService *drive.Service) (string, error) {
+	query := "name = 'postgresus_backups' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+
+	results, err := driveService.Files.List().
+		Q(query).
+		Fields("files(id)").
+		PageSize(1).
+		Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to search for backups folder: %w", err)
+	}
+
+	if len(results.Files) == 0 {
+		return "", fmt.Errorf("postgresus_backups folder not found")
+	}
+
+	return results.Files[0].Id, nil
 }

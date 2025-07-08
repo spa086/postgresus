@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	usecases_postgresql "postgresus-backend/internal/features/backups/usecases/postgresql"
+	usecases_postgresql "postgresus-backend/internal/features/backups/backups/usecases/postgresql"
 )
 
 var createBackupUsecase = &CreateBackupUsecase{

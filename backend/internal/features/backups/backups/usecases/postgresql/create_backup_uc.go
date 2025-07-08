@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"postgresus-backend/internal/config"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/storages"
@@ -29,6 +30,7 @@ type CreatePostgresqlBackupUsecase struct {
 // Execute creates a backup of the database
 func (uc *CreatePostgresqlBackupUsecase) Execute(
 	backupID uuid.UUID,
+	backupConfig *backups_config.BackupConfig,
 	db *databases.Database,
 	storage *storages.Storage,
 	backupProgressListener func(
@@ -42,6 +44,10 @@ func (uc *CreatePostgresqlBackupUsecase) Execute(
 		"storageId",
 		storage.ID,
 	)
+
+	if !backupConfig.IsBackupsEnabled {
+		return fmt.Errorf("backups are not enabled for this database: \"%s\"", db.Name)
+	}
 
 	pg := db.Postgresql
 
@@ -66,6 +72,7 @@ func (uc *CreatePostgresqlBackupUsecase) Execute(
 
 	return uc.streamToStorage(
 		backupID,
+		backupConfig,
 		tools.GetPostgresqlExecutable(
 			pg.Version,
 			"pg_dump",
@@ -83,6 +90,7 @@ func (uc *CreatePostgresqlBackupUsecase) Execute(
 // streamToStorage streams pg_dump output directly to storage
 func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 	backupID uuid.UUID,
+	backupConfig *backups_config.BackupConfig,
 	pgBin string,
 	args []string,
 	password string,
@@ -156,7 +164,7 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 		"passwordEmpty", password == "",
 		"pgBin", pgBin,
 		"usingPgpassFile", true,
-		"parallelJobs", db.Postgresql.CpuCount,
+		"parallelJobs", backupConfig.CpuCount,
 	)
 
 	// Add PostgreSQL-specific environment variables

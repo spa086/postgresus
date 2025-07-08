@@ -12,8 +12,8 @@ var databaseService = &DatabaseService{
 	databaseRepository,
 	notifiers.GetNotifierService(),
 	logger.GetLogger(),
-	nil,
-	nil,
+	[]DatabaseCreationListener{},
+	[]DatabaseRemoveListener{},
 }
 
 var databaseController = &DatabaseController{

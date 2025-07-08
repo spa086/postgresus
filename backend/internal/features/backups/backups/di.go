@@ -1,7 +1,8 @@
 package backups
 
 import (
-	"postgresus-backend/internal/features/backups/usecases"
+	"postgresus-backend/internal/features/backups/backups/usecases"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
@@ -17,8 +18,10 @@ var backupService = &BackupService{
 	backupRepository,
 	notifiers.GetNotifierService(),
 	notifiers.GetNotifierService(),
+	backups_config.GetBackupConfigService(),
 	usecases.GetCreateBackupUsecase(),
 	logger.GetLogger(),
+	[]BackupRemoveListener{},
 }
 
 var backupBackgroundService = &BackupBackgroundService{
@@ -26,6 +29,7 @@ var backupBackgroundService = &BackupBackgroundService{
 	backupRepository,
 	databases.GetDatabaseService(),
 	storages.GetStorageService(),
+	backups_config.GetBackupConfigService(),
 	time.Now().UTC(),
 	logger.GetLogger(),
 }
@@ -36,9 +40,11 @@ var backupController = &BackupController{
 }
 
 func SetupDependencies() {
-	databases.
-		GetDatabaseService().
+	backups_config.
+		GetBackupConfigService().
 		SetDatabaseStorageChangeListener(backupService)
+
+	databases.GetDatabaseService().AddDbRemoveListener(backupService)
 }
 
 func GetBackupService() *BackupService {

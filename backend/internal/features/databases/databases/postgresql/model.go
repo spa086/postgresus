@@ -27,8 +27,6 @@ type PostgresqlDatabase struct {
 	Password string  `json:"password" gorm:"type:text;not null"`
 	Database *string `json:"database" gorm:"type:text"`
 	IsHttps  bool    `json:"isHttps"  gorm:"type:boolean;default:false"`
-
-	CpuCount int `json:"cpuCount" gorm:"type:int;not null"`
 }
 
 func (p *PostgresqlDatabase) TableName() string {

@@ -15,14 +15,8 @@ type DatabaseService struct {
 	notifierService *notifiers.NotifierService
 	logger          *slog.Logger
 
-	dbStorageChangeListener DatabaseStorageChangeListener
-	dbCreationListener      []DatabaseCreationListener
-}
-
-func (s *DatabaseService) SetDatabaseStorageChangeListener(
-	dbStorageChangeListener DatabaseStorageChangeListener,
-) {
-	s.dbStorageChangeListener = dbStorageChangeListener
+	dbCreationListener []DatabaseCreationListener
+	dbRemoveListener   []DatabaseRemoveListener
 }
 
 func (s *DatabaseService) AddDbCreationListener(
@@ -31,26 +25,32 @@ func (s *DatabaseService) AddDbCreationListener(
 	s.dbCreationListener = append(s.dbCreationListener, dbCreationListener)
 }
 
+func (s *DatabaseService) AddDbRemoveListener(
+	dbRemoveListener DatabaseRemoveListener,
+) {
+	s.dbRemoveListener = append(s.dbRemoveListener, dbRemoveListener)
+}
+
 func (s *DatabaseService) CreateDatabase(
 	user *users_models.User,
 	database *Database,
-) error {
+) (*Database, error) {
 	database.UserID = user.ID
 
 	if err := database.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	database, err := s.dbRepository.Save(database)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, listener := range s.dbCreationListener {
 		listener.OnDatabaseCreated(database.ID)
 	}
 
-	return nil
+	return database, nil
 }
 
 func (s *DatabaseService) UpdateDatabase(
@@ -79,17 +79,6 @@ func (s *DatabaseService) UpdateDatabase(
 		return err
 	}
 
-	if existingDatabase.Storage.ID != database.Storage.ID {
-		err := s.dbStorageChangeListener.OnBeforeDbStorageChange(
-			existingDatabase.ID,
-			database.StorageID,
-		)
-
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err = s.dbRepository.Save(database)
 	if err != nil {
 		return err
@@ -109,6 +98,12 @@ func (s *DatabaseService) DeleteDatabase(
 
 	if existingDatabase.UserID != user.ID {
 		return errors.New("you have not access to this database")
+	}
+
+	for _, listener := range s.dbRemoveListener {
+		if err := listener.OnBeforeDatabaseRemove(id); err != nil {
+			return err
+		}
 	}
 
 	return s.dbRepository.Delete(id)
@@ -136,12 +131,16 @@ func (s *DatabaseService) GetDatabasesByUser(
 	return s.dbRepository.FindByUserID(user.ID)
 }
 
-func (s *DatabaseService) IsNotifierUsing(notifierID uuid.UUID) (bool, error) {
-	return s.dbRepository.IsNotifierUsing(notifierID)
-}
+func (s *DatabaseService) IsNotifierUsing(
+	user *users_models.User,
+	notifierID uuid.UUID,
+) (bool, error) {
+	_, err := s.notifierService.GetNotifier(user, notifierID)
+	if err != nil {
+		return false, err
+	}
 
-func (s *DatabaseService) IsStorageUsing(storageID uuid.UUID) (bool, error) {
-	return s.dbRepository.IsStorageUsing(storageID)
+	return s.dbRepository.IsNotifierUsing(notifierID)
 }
 
 func (s *DatabaseService) TestDatabaseConnection(

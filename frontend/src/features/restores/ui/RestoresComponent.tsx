@@ -108,6 +108,7 @@ export const RestoresComponent = ({ database, backup }: Props) => {
               restore(database);
             }}
             isShowDbVersionHint={false}
+            isBlockDbName
           />
         </>
       );

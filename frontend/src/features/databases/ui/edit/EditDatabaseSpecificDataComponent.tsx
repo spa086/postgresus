@@ -26,6 +26,7 @@ interface Props {
 
   isShowDbVersionHint?: boolean;
   isShowDbName?: boolean;
+  isBlockDbName?: boolean;
 }
 
 export const EditDatabaseSpecificDataComponent = ({
@@ -43,6 +44,8 @@ export const EditDatabaseSpecificDataComponent = ({
 
   isShowDbVersionHint = true,
   isShowDbName = true,
+
+  isBlockDbName = false,
 }: Props) => {
   const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
@@ -263,6 +266,7 @@ export const EditDatabaseSpecificDataComponent = ({
                 size="small"
                 className="max-w-[200px] grow"
                 placeholder="Enter PG database name (optional)"
+                disabled={isBlockDbName}
               />
             </div>
           )}
@@ -282,33 +286,6 @@ export const EditDatabaseSpecificDataComponent = ({
               }}
               size="small"
             />
-          </div>
-
-          <div className="mb-1 flex w-full items-center">
-            <div className="min-w-[150px]">CPU count</div>
-            <InputNumber
-              value={editingDatabase.postgresql?.cpuCount}
-              onChange={(e) => {
-                if (!editingDatabase.postgresql || e === null) return;
-
-                setEditingDatabase({
-                  ...editingDatabase,
-                  postgresql: { ...editingDatabase.postgresql, cpuCount: e },
-                });
-                setIsConnectionTested(false);
-              }}
-              size="small"
-              className="max-w-[200px] grow"
-              placeholder="Enter PG CPU count"
-              min={1}
-              step={1}
-            />
-            <Tooltip
-              className="cursor-pointer"
-              title="The amount of CPU can be utilized for backuping or restoring"
-            >
-              <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
-            </Tooltip>
           </div>
         </>
       )}

@@ -1,7 +1,7 @@
 package system_healthcheck
 
 import (
-	"postgresus-backend/internal/features/backups"
+	"postgresus-backend/internal/features/backups/backups"
 	"postgresus-backend/internal/features/disk"
 )
 

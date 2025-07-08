@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 
 import type { Database } from '../../../entity/databases';
 import { HealthStatus } from '../../../entity/databases/model/HealthStatus';
-import { type HealthcheckAttempt, healthcheckAttemptApi } from '../../../entity/healthcheck';
+import {
+  type HealthcheckAttempt,
+  healthcheckAttemptApi,
+  healthcheckConfigApi,
+} from '../../../entity/healthcheck';
 import { getUserShortTimeFormat } from '../../../shared/time/getUserTimeFormat';
 
 interface Props {
@@ -36,6 +40,9 @@ const getAfterDateByPeriod = (period: 'today' | '7d' | '30d' | 'all'): Date => {
 };
 
 export const HealthckeckAttemptsComponent = ({ database }: Props) => {
+  const [isHealthcheckConfigLoading, setIsHealthcheckConfigLoading] = useState(false);
+  const [isShowHealthcheckConfig, setIsShowHealthcheckConfig] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [healthcheckAttempts, setHealthcheckAttempts] = useState<HealthcheckAttempt[]>([]);
   const [period, setPeriod] = useState<'today' | '7d' | '30d' | 'all'>('today');
@@ -71,21 +78,45 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
   };
 
   useEffect(() => {
-    loadHealthcheckAttempts();
-  }, [database, period]);
+    let isHealthcheckEnabled = false;
 
-  useEffect(() => {
+    setIsHealthcheckConfigLoading(true);
+    healthcheckConfigApi.getHealthcheckConfig(database.id).then((healthcheckConfig) => {
+      setIsHealthcheckConfigLoading(false);
+
+      if (healthcheckConfig.isHealthcheckEnabled) {
+        isHealthcheckEnabled = true;
+        setIsShowHealthcheckConfig(true);
+
+        loadHealthcheckAttempts();
+      }
+    });
+
     if (period === 'today') {
-      const interval = setInterval(() => {
-        loadHealthcheckAttempts(false);
-      }, 60_000); // 1 minute
+      if (isHealthcheckEnabled) {
+        const interval = setInterval(() => {
+          loadHealthcheckAttempts(false);
+        }, 60_000); // 1 minute
 
-      return () => clearInterval(interval);
+        return () => clearInterval(interval);
+      }
     }
   }, [period]);
 
+  if (isHealthcheckConfigLoading) {
+    return (
+      <div className="mb-5 flex items-center">
+        <Spin />
+      </div>
+    );
+  }
+
+  if (!isShowHealthcheckConfig) {
+    return <div />;
+  }
+
   return (
-    <div>
+    <div className="mt-5 w-full rounded bg-white p-5 shadow">
       <h2 className="text-xl font-bold">Healthcheck attempts</h2>
 
       <div className="mt-4 flex items-center gap-2">
@@ -111,7 +142,7 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
           <Spin size="small" />
         </div>
       ) : (
-        <div className="flex max-w-[750px] flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1">
           {healthcheckAttempts.length > 0 ? (
             healthcheckAttempts.map((healthcheckAttempt) => (
               <Tooltip
@@ -128,7 +159,7 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
               </Tooltip>
             ))
           ) : (
-            <div className="text-xs text-gray-400">No data</div>
+            <div className="text-xs text-gray-400">No data yet</div>
           )}
         </div>
       )}

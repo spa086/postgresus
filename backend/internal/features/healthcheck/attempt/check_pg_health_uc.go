@@ -83,7 +83,6 @@ func (uc *CheckPgHealthUseCase) updateDatabaseHealthStatusIfChanged(
 	heathcheckAttempt *HealthcheckAttempt,
 ) error {
 	if &heathcheckAttempt.Status == database.HealthStatus {
-		fmt.Println("Database health status is the same as the attempt status")
 		return nil
 	}
 
@@ -226,7 +225,7 @@ func (uc *CheckPgHealthUseCase) sendDbStatusNotification(
 
 	if newHealthStatus == databases.HealthStatusAvailable {
 		messageTitle = fmt.Sprintf("✅ [%s] DB is back online", database.Name)
-		messageBody = fmt.Sprintf("✅ [%s] DB is back online after being unavailable", database.Name)
+		messageBody = fmt.Sprintf("✅ [%s] DB is back online", database.Name)
 	} else {
 		messageTitle = fmt.Sprintf("❌ [%s] DB is unavailable", database.Name)
 		messageBody = fmt.Sprintf("❌ [%s] DB is currently unavailable", database.Name)

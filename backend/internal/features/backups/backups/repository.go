@@ -43,6 +43,22 @@ func (r *BackupRepository) FindByDatabaseID(databaseID uuid.UUID) ([]*Backup, er
 	return backups, nil
 }
 
+func (r *BackupRepository) FindByStorageID(storageID uuid.UUID) ([]*Backup, error) {
+	var backups []*Backup
+
+	if err := storage.
+		GetDb().
+		Preload("Database").
+		Preload("Storage").
+		Where("storage_id = ?", storageID).
+		Order("created_at DESC").
+		Find(&backups).Error; err != nil {
+		return nil, err
+	}
+
+	return backups, nil
+}
+
 func (r *BackupRepository) FindLastByDatabaseID(databaseID uuid.UUID) (*Backup, error) {
 	var backup Backup
 
@@ -105,6 +121,25 @@ func (r *BackupRepository) FindByStorageIdAndStatus(
 		Preload("Database").
 		Preload("Storage").
 		Where("storage_id = ? AND status = ?", storageID, status).
+		Order("created_at DESC").
+		Find(&backups).Error; err != nil {
+		return nil, err
+	}
+
+	return backups, nil
+}
+
+func (r *BackupRepository) FindByDatabaseIdAndStatus(
+	databaseID uuid.UUID,
+	status BackupStatus,
+) ([]*Backup, error) {
+	var backups []*Backup
+
+	if err := storage.
+		GetDb().
+		Preload("Database").
+		Preload("Storage").
+		Where("database_id = ? AND status = ?", databaseID, status).
 		Order("created_at DESC").
 		Find(&backups).Error; err != nil {
 		return nil, err

@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 
 import { type Database, DatabaseType } from '../../../entity/databases';
 import { HealthStatus } from '../../../entity/databases/model/HealthStatus';
-import { getStorageLogoFromType } from '../../../entity/storages';
 import { getUserShortTimeFormat } from '../../../shared/time/getUserTimeFormat';
 
 interface Props {
@@ -50,16 +49,6 @@ export const DatabaseCardComponent = ({
         <div className="text-sm text-gray-500">Database type: {databaseType}</div>
 
         <img src={databaseIcon} alt="databaseIcon" className="ml-1 h-4 w-4" />
-      </div>
-
-      <div className="mb flex items-center">
-        <div className="text-sm text-gray-500">Store to: {database.storage?.name} </div>
-
-        <img
-          src={getStorageLogoFromType(database.storage?.type)}
-          alt="databaseIcon"
-          className="ml-1 h-4 w-4"
-        />
       </div>
 
       {database.lastBackupTime && (

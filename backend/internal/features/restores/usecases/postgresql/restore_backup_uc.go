@@ -14,7 +14,8 @@ import (
 	"time"
 
 	"postgresus-backend/internal/config"
-	"postgresus-backend/internal/features/backups"
+	"postgresus-backend/internal/features/backups/backups"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	pgtypes "postgresus-backend/internal/features/databases/databases/postgresql"
 	"postgresus-backend/internal/features/restores/models"
@@ -29,6 +30,7 @@ type RestorePostgresqlBackupUsecase struct {
 }
 
 func (uc *RestorePostgresqlBackupUsecase) Execute(
+	backupConfig *backups_config.BackupConfig,
 	restore models.Restore,
 	backup *backups.Backup,
 	storage *storages.Storage,
@@ -56,7 +58,7 @@ func (uc *RestorePostgresqlBackupUsecase) Execute(
 
 	// Use parallel jobs based on CPU count (same as backup)
 	// Cap between 1 and 8 to avoid overwhelming the server
-	parallelJobs := max(1, min(pg.CpuCount, 8))
+	parallelJobs := max(1, min(backupConfig.CpuCount, 8))
 
 	args := []string{
 		"-Fc",                            // expect custom format (same as backup)

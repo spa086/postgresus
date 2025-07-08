@@ -18,25 +18,7 @@ func (r *DatabaseRepository) Save(database *Database) (*Database, error) {
 		database.ID = uuid.New()
 	}
 
-	database.StorageID = database.Storage.ID
-
 	err := db.Transaction(func(tx *gorm.DB) error {
-		if database.BackupInterval != nil {
-			if database.BackupInterval.ID == uuid.Nil {
-				if err := tx.Create(database.BackupInterval).Error; err != nil {
-					return err
-				}
-
-				database.BackupIntervalID = database.BackupInterval.ID
-			} else {
-				if err := tx.Save(database.BackupInterval).Error; err != nil {
-					return err
-				}
-
-				database.BackupIntervalID = database.BackupInterval.ID
-			}
-		}
-
 		switch database.Type {
 		case DatabaseTypePostgres:
 			if database.Postgresql != nil {
@@ -46,13 +28,13 @@ func (r *DatabaseRepository) Save(database *Database) (*Database, error) {
 
 		if isNew {
 			if err := tx.Create(database).
-				Omit("Postgresql", "Storage", "Notifiers", "BackupInterval").
+				Omit("Postgresql", "Notifiers").
 				Error; err != nil {
 				return err
 			}
 		} else {
 			if err := tx.Save(database).
-				Omit("Postgresql", "Storage", "Notifiers", "BackupInterval").
+				Omit("Postgresql", "Notifiers").
 				Error; err != nil {
 				return err
 			}
@@ -76,7 +58,10 @@ func (r *DatabaseRepository) Save(database *Database) (*Database, error) {
 			}
 		}
 
-		if err := tx.Model(database).Association("Notifiers").Replace(database.Notifiers); err != nil {
+		if err := tx.
+			Model(database).
+			Association("Notifiers").
+			Replace(database.Notifiers); err != nil {
 			return err
 		}
 
@@ -95,9 +80,7 @@ func (r *DatabaseRepository) FindByID(id uuid.UUID) (*Database, error) {
 
 	if err := storage.
 		GetDb().
-		Preload("BackupInterval").
 		Preload("Postgresql").
-		Preload("Storage").
 		Preload("Notifiers").
 		Where("id = ?", id).
 		First(&database).Error; err != nil {
@@ -112,9 +95,7 @@ func (r *DatabaseRepository) FindByUserID(userID uuid.UUID) ([]*Database, error)
 
 	if err := storage.
 		GetDb().
-		Preload("BackupInterval").
 		Preload("Postgresql").
-		Preload("Storage").
 		Preload("Notifiers").
 		Where("user_id = ?", userID).
 		Order("CASE WHEN health_status = 'UNAVAILABLE' THEN 1 WHEN health_status = 'AVAILABLE' THEN 2 WHEN health_status IS NULL THEN 3 ELSE 4 END, name ASC").
@@ -140,7 +121,9 @@ func (r *DatabaseRepository) Delete(id uuid.UUID) error {
 
 		switch database.Type {
 		case DatabaseTypePostgres:
-			if err := tx.Where("database_id = ?", id).Delete(&postgresql.PostgresqlDatabase{}).Error; err != nil {
+			if err := tx.
+				Where("database_id = ?", id).
+				Delete(&postgresql.PostgresqlDatabase{}).Error; err != nil {
 				return err
 			}
 		}
@@ -167,28 +150,12 @@ func (r *DatabaseRepository) IsNotifierUsing(notifierID uuid.UUID) (bool, error)
 	return count > 0, nil
 }
 
-func (r *DatabaseRepository) IsStorageUsing(storageID uuid.UUID) (bool, error) {
-	var count int64
-
-	if err := storage.
-		GetDb().
-		Table("databases").
-		Where("storage_id = ?", storageID).
-		Count(&count).Error; err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
-}
-
 func (r *DatabaseRepository) GetAllDatabases() ([]*Database, error) {
 	var databases []*Database
 
 	if err := storage.
 		GetDb().
-		Preload("BackupInterval").
 		Preload("Postgresql").
-		Preload("Storage").
 		Preload("Notifiers").
 		Find(&databases).Error; err != nil {
 		return nil, err

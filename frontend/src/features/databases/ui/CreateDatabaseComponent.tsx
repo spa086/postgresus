@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { backupsApi } from '../../../entity/backups';
+import { type BackupConfig, backupConfigApi, backupsApi } from '../../../entity/backups';
 import {
   type Database,
   DatabaseType,
@@ -8,10 +8,10 @@ import {
   type PostgresqlDatabase,
   databaseApi,
 } from '../../../entity/databases';
+import { EditBackupConfigComponent } from '../../backups';
 import { EditDatabaseBaseInfoComponent } from './edit/EditDatabaseBaseInfoComponent';
 import { EditDatabaseNotifiersComponent } from './edit/EditDatabaseNotifiersComponent';
 import { EditDatabaseSpecificDataComponent } from './edit/EditDatabaseSpecificDataComponent';
-import { EditDatabaseStorageComponent } from './edit/EditDatabaseStorageComponent';
 
 interface Props {
   onCreated: () => void;
@@ -21,6 +21,7 @@ interface Props {
 
 export const CreateDatabaseComponent = ({ onCreated, onClose }: Props) => {
   const [isCreating, setIsCreating] = useState(false);
+  const [backupConfig, setBackupConfig] = useState<BackupConfig | undefined>();
   const [database, setDatabase] = useState<Database>({
     id: undefined as unknown as string,
     name: '',
@@ -38,18 +39,23 @@ export const CreateDatabaseComponent = ({ onCreated, onClose }: Props) => {
     sendNotificationsOn: [],
   } as Database);
 
-  const [step, setStep] = useState<'base-info' | 'db-settings' | 'storages' | 'notifiers'>(
+  const [step, setStep] = useState<'base-info' | 'db-settings' | 'backup-config' | 'notifiers'>(
     'base-info',
   );
 
-  const createDatabase = async (database: Database) => {
+  const createDatabase = async (database: Database, backupConfig: BackupConfig) => {
     setIsCreating(true);
 
     try {
       const createdDatabase = await databaseApi.createDatabase(database);
       setDatabase({ ...createdDatabase });
 
-      await backupsApi.makeBackup(createdDatabase.id);
+      backupConfig.databaseId = createdDatabase.id;
+      await backupConfigApi.saveBackupConfig(backupConfig);
+      if (backupConfig.isBackupsEnabled) {
+        await backupsApi.makeBackup(createdDatabase.id);
+      }
+
       onCreated();
       onClose();
     } catch (error) {
@@ -89,25 +95,24 @@ export const CreateDatabaseComponent = ({ onCreated, onClose }: Props) => {
         isSaveToApi={false}
         onSaved={(database) => {
           setDatabase({ ...database });
-          setStep('storages');
+          setStep('backup-config');
         }}
       />
     );
   }
 
-  if (step === 'storages') {
+  if (step === 'backup-config') {
     return (
-      <EditDatabaseStorageComponent
+      <EditBackupConfigComponent
         database={database}
         isShowCancelButton={false}
         onCancel={() => onClose()}
         isShowBackButton
         onBack={() => setStep('db-settings')}
-        isShowSaveOnlyForUnsaved={false}
         saveButtonText="Continue"
         isSaveToApi={false}
-        onSaved={(database) => {
-          setDatabase({ ...database });
+        onSaved={(backupConfig) => {
+          setBackupConfig(backupConfig);
           setStep('notifiers');
         }}
       />
@@ -121,7 +126,7 @@ export const CreateDatabaseComponent = ({ onCreated, onClose }: Props) => {
         isShowCancelButton={false}
         onCancel={() => onClose()}
         isShowBackButton
-        onBack={() => setStep('storages')}
+        onBack={() => setStep('backup-config')}
         isShowSaveOnlyForUnsaved={false}
         saveButtonText="Complete"
         isSaveToApi={false}
@@ -129,7 +134,7 @@ export const CreateDatabaseComponent = ({ onCreated, onClose }: Props) => {
           if (isCreating) return;
 
           setDatabase({ ...database });
-          createDatabase(database);
+          createDatabase(database, backupConfig!);
         }}
       />
     );

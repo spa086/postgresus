@@ -2,6 +2,7 @@ package backups
 
 import (
 	"errors"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/notifiers"
 	"postgresus-backend/internal/features/storages"
@@ -20,6 +21,7 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 	storage := storages.CreateTestStorage(user.UserID)
 	notifier := notifiers.CreateTestNotifier(user.UserID)
 	database := databases.CreateTestDatabase(user.UserID, storage, notifier)
+	backups_config.EnableBackupsForTestDatabase(database.ID, storage)
 
 	defer storages.RemoveTestStorage(storage.ID)
 	defer notifiers.RemoveTestNotifier(notifier)
@@ -33,8 +35,10 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			backupRepository,
 			notifiers.GetNotifierService(),
 			mockNotificationSender,
+			backups_config.GetBackupConfigService(),
 			&CreateFailedBackupUsecase{},
 			logger.GetLogger(),
+			[]BackupRemoveListener{},
 		}
 
 		// Set up expectations
@@ -74,8 +78,10 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			backupRepository,
 			notifiers.GetNotifierService(),
 			mockNotificationSender,
+			backups_config.GetBackupConfigService(),
 			&CreateSuccessBackupUsecase{},
 			logger.GetLogger(),
+			[]BackupRemoveListener{},
 		}
 
 		backupService.MakeBackup(database.ID)
@@ -92,8 +98,10 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			backupRepository,
 			notifiers.GetNotifierService(),
 			mockNotificationSender,
+			backups_config.GetBackupConfigService(),
 			&CreateSuccessBackupUsecase{},
 			logger.GetLogger(),
+			[]BackupRemoveListener{},
 		}
 
 		// capture arguments
@@ -130,6 +138,7 @@ type CreateFailedBackupUsecase struct {
 
 func (uc *CreateFailedBackupUsecase) Execute(
 	backupID uuid.UUID,
+	backupConfig *backups_config.BackupConfig,
 	database *databases.Database,
 	storage *storages.Storage,
 	backupProgressListener func(
@@ -145,6 +154,7 @@ type CreateSuccessBackupUsecase struct {
 
 func (uc *CreateSuccessBackupUsecase) Execute(
 	backupID uuid.UUID,
+	backupConfig *backups_config.BackupConfig,
 	database *databases.Database,
 	storage *storages.Storage,
 	backupProgressListener func(

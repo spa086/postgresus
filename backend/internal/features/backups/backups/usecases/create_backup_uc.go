@@ -2,7 +2,8 @@ package usecases
 
 import (
 	"errors"
-	usecases_postgresql "postgresus-backend/internal/features/backups/usecases/postgresql"
+	usecases_postgresql "postgresus-backend/internal/features/backups/backups/usecases/postgresql"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/storages"
 
@@ -16,6 +17,7 @@ type CreateBackupUsecase struct {
 // Execute creates a backup of the database and returns the backup size in MB
 func (uc *CreateBackupUsecase) Execute(
 	backupID uuid.UUID,
+	backupConfig *backups_config.BackupConfig,
 	database *databases.Database,
 	storage *storages.Storage,
 	backupProgressListener func(
@@ -25,6 +27,7 @@ func (uc *CreateBackupUsecase) Execute(
 	if database.Type == databases.DatabaseTypePostgres {
 		return uc.CreatePostgresqlBackupUsecase.Execute(
 			backupID,
+			backupConfig,
 			database,
 			storage,
 			backupProgressListener,

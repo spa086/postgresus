@@ -6,20 +6,20 @@ import { useEffect } from 'react';
 import { type Database, databaseApi } from '../../../entity/databases';
 import { ToastHelper } from '../../../shared/toast';
 import { ConfirmationComponent } from '../../../shared/ui';
-import { BackupsComponent } from '../../backups';
+import {
+  BackupsComponent,
+  EditBackupConfigComponent,
+  ShowBackupConfigComponent,
+} from '../../backups';
 import {
   EditHealthcheckConfigComponent,
   HealthckeckAttemptsComponent,
   ShowHealthcheckConfigComponent,
 } from '../../healthcheck';
-import { EditDatabaseBaseInfoComponent } from './edit/EditDatabaseBaseInfoComponent';
 import { EditDatabaseNotifiersComponent } from './edit/EditDatabaseNotifiersComponent';
 import { EditDatabaseSpecificDataComponent } from './edit/EditDatabaseSpecificDataComponent';
-import { EditDatabaseStorageComponent } from './edit/EditDatabaseStorageComponent';
-import { ShowDatabaseBaseInfoComponent } from './show/ShowDatabaseBaseInfoComponent';
 import { ShowDatabaseNotifiersComponent } from './show/ShowDatabaseNotifiersComponent';
 import { ShowDatabaseSpecificDataComponent } from './show/ShowDatabaseSpecificDataComponent';
-import { ShowDatabaseStorageComponent } from './show/ShowDatabaseStorageComponent';
 
 interface Props {
   contentHeight: number;
@@ -37,10 +37,9 @@ export const DatabaseComponent = ({
   const [database, setDatabase] = useState<Database | undefined>();
 
   const [isEditName, setIsEditName] = useState(false);
-  const [isEditBaseSettings, setIsEditBaseSettings] = useState(false);
   const [isEditDatabaseSpecificDataSettings, setIsEditDatabaseSpecificDataSettings] =
     useState(false);
-  const [isEditStorageSettings, setIsEditStorageSettings] = useState(false);
+  const [isEditBackupConfig, setIsEditBackupConfig] = useState(false);
   const [isEditNotifiersSettings, setIsEditNotifiersSettings] = useState(false);
   const [isEditHealthcheckSettings, setIsEditHealthcheckSettings] = useState(false);
 
@@ -95,14 +94,11 @@ export const DatabaseComponent = ({
       });
   };
 
-  const startEdit = (
-    type: 'name' | 'settings' | 'database' | 'storage' | 'notifiers' | 'healthcheck',
-  ) => {
+  const startEdit = (type: 'name' | 'database' | 'backup-config' | 'notifiers' | 'healthcheck') => {
     setEditDatabase(JSON.parse(JSON.stringify(database)));
     setIsEditName(type === 'name');
-    setIsEditBaseSettings(type === 'settings');
     setIsEditDatabaseSpecificDataSettings(type === 'database');
-    setIsEditStorageSettings(type === 'storage');
+    setIsEditBackupConfig(type === 'backup-config');
     setIsEditNotifiersSettings(type === 'notifiers');
     setIsEditHealthcheckSettings(type === 'healthcheck');
     setIsNameUnsaved(false);
@@ -224,41 +220,6 @@ export const DatabaseComponent = ({
             <div className="flex flex-wrap gap-10">
               <div className="w-[350px]">
                 <div className="mt-5 flex items-center font-bold">
-                  <div>Backup settings</div>
-
-                  {!isEditBaseSettings ? (
-                    <div
-                      className="ml-2 h-4 w-4 cursor-pointer"
-                      onClick={() => startEdit('settings')}
-                    >
-                      <img src="/icons/pen-gray.svg" />
-                    </div>
-                  ) : (
-                    <div />
-                  )}
-                </div>
-
-                <div className="mt-1 text-sm">
-                  {isEditBaseSettings ? (
-                    <EditDatabaseBaseInfoComponent
-                      isShowName={false}
-                      database={database}
-                      isShowCancelButton
-                      onCancel={() => {
-                        setIsEditBaseSettings(false);
-                        loadSettings();
-                      }}
-                      isSaveToApi={true}
-                      onSaved={onDatabaseChanged}
-                    />
-                  ) : (
-                    <ShowDatabaseBaseInfoComponent database={database} />
-                  )}
-                </div>
-              </div>
-
-              <div className="w-[350px]">
-                <div className="mt-5 flex items-center font-bold">
                   <div>Database settings</div>
 
                   {!isEditDatabaseSpecificDataSettings ? (
@@ -292,17 +253,15 @@ export const DatabaseComponent = ({
                   )}
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap gap-10">
               <div className="w-[350px]">
                 <div className="mt-5 flex items-center font-bold">
-                  <div>Storage settings</div>
+                  <div>Backup config</div>
 
-                  {!isEditStorageSettings ? (
+                  {!isEditBackupConfig ? (
                     <div
                       className="ml-2 h-4 w-4 cursor-pointer"
-                      onClick={() => startEdit('storage')}
+                      onClick={() => startEdit('backup-config')}
                     >
                       <img src="/icons/pen-gray.svg" />
                     </div>
@@ -313,24 +272,56 @@ export const DatabaseComponent = ({
 
                 <div>
                   <div className="mt-1 text-sm">
-                    {isEditStorageSettings ? (
-                      <EditDatabaseStorageComponent
+                    {isEditBackupConfig ? (
+                      <EditBackupConfigComponent
                         database={database}
                         isShowCancelButton
-                        isShowBackButton={false}
-                        isShowSaveOnlyForUnsaved={true}
-                        onBack={() => {}}
                         onCancel={() => {
-                          setIsEditStorageSettings(false);
+                          setIsEditBackupConfig(false);
                           loadSettings();
                         }}
                         isSaveToApi={true}
-                        onSaved={onDatabaseChanged}
+                        onSaved={() => onDatabaseChanged(database)}
+                        isShowBackButton={false}
+                        onBack={() => {}}
                       />
                     ) : (
-                      <ShowDatabaseStorageComponent database={database} />
+                      <ShowBackupConfigComponent database={database} />
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-10">
+              <div className="w-[350px]">
+                <div className="mt-5 flex items-center font-bold">
+                  <div>Healthcheck settings</div>
+
+                  {!isEditHealthcheckSettings ? (
+                    <div
+                      className="ml-2 h-4 w-4 cursor-pointer"
+                      onClick={() => startEdit('healthcheck')}
+                    >
+                      <img src="/icons/pen-gray.svg" />
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+
+                <div className="mt-1 text-sm">
+                  {isEditHealthcheckSettings ? (
+                    <EditHealthcheckConfigComponent
+                      databaseId={database.id}
+                      onClose={() => {
+                        setIsEditHealthcheckSettings(false);
+                        loadSettings();
+                      }}
+                    />
+                  ) : (
+                    <ShowHealthcheckConfigComponent databaseId={database.id} />
+                  )}
                 </div>
               </div>
 
@@ -368,39 +359,6 @@ export const DatabaseComponent = ({
                     />
                   ) : (
                     <ShowDatabaseNotifiersComponent database={database} />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-10">
-              <div className="w-[350px]">
-                <div className="mt-5 flex items-center font-bold">
-                  <div>Healthcheck settings</div>
-
-                  {!isEditHealthcheckSettings ? (
-                    <div
-                      className="ml-2 h-4 w-4 cursor-pointer"
-                      onClick={() => startEdit('healthcheck')}
-                    >
-                      <img src="/icons/pen-gray.svg" />
-                    </div>
-                  ) : (
-                    <div />
-                  )}
-                </div>
-
-                <div className="mt-1 text-sm">
-                  {isEditHealthcheckSettings ? (
-                    <EditHealthcheckConfigComponent
-                      databaseId={database.id}
-                      onClose={() => {
-                        setIsEditHealthcheckSettings(false);
-                        loadSettings();
-                      }}
-                    />
-                  ) : (
-                    <ShowHealthcheckConfigComponent databaseId={database.id} />
                   )}
                 </div>
               </div>
@@ -445,13 +403,8 @@ export const DatabaseComponent = ({
         )}
       </div>
 
-      <div className="mt-5 w-full rounded bg-white p-5 shadow">
-        {database && <HealthckeckAttemptsComponent database={database} />}
-      </div>
-
-      <div className="mt-5 w-full rounded bg-white p-5 shadow">
-        {database && <BackupsComponent database={database} />}
-      </div>
+      {database && <HealthckeckAttemptsComponent database={database} />}
+      {database && <BackupsComponent database={database} />}
     </div>
   );
 };

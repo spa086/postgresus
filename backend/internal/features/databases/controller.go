@@ -22,7 +22,7 @@ func (c *DatabaseController) RegisterRoutes(router *gin.RouterGroup) {
 	router.POST("/databases/:id/test-connection", c.TestDatabaseConnection)
 	router.POST("/databases/test-connection-direct", c.TestDatabaseConnectionDirect)
 	router.GET("/databases/notifier/:id/is-using", c.IsNotifierUsing)
-	router.GET("/databases/storage/:id/is-using", c.IsStorageUsing)
+
 }
 
 // CreateDatabase
@@ -56,12 +56,13 @@ func (c *DatabaseController) CreateDatabase(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.databaseService.CreateDatabase(user, &request); err != nil {
+	database, err := c.databaseService.CreateDatabase(user, &request)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, request)
+	ctx.JSON(http.StatusCreated, database)
 }
 
 // UpdateDatabase
@@ -310,52 +311,13 @@ func (c *DatabaseController) IsNotifierUsing(ctx *gin.Context) {
 		return
 	}
 
-	_, err = c.userService.GetUserFromToken(authorizationHeader)
+	user, err := c.userService.GetUserFromToken(authorizationHeader)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 		return
 	}
 
-	isUsing, err := c.databaseService.IsNotifierUsing(id)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"isUsing": isUsing})
-}
-
-// IsStorageUsing
-// @Summary Check if storage is being used
-// @Description Check if a storage is currently being used by any database
-// @Tags databases
-// @Produce json
-// @Param id path string true "Storage ID"
-// @Success 200 {object} map[string]bool
-// @Failure 400
-// @Failure 401
-// @Failure 500
-// @Router /databases/storage/{id}/is-using [get]
-func (c *DatabaseController) IsStorageUsing(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid storage ID"})
-		return
-	}
-
-	authorizationHeader := ctx.GetHeader("Authorization")
-	if authorizationHeader == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header is required"})
-		return
-	}
-
-	_, err = c.userService.GetUserFromToken(authorizationHeader)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-		return
-	}
-
-	isUsing, err := c.databaseService.IsStorageUsing(id)
+	isUsing, err := c.databaseService.IsNotifierUsing(user, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

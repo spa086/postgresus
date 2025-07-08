@@ -77,17 +77,4 @@ export const databaseApi = {
       )
       .then((res) => res.isUsing);
   },
-
-  async isStorageUsing(storageId: string): Promise<boolean> {
-    const requestOptions: RequestOptions = new RequestOptions();
-    return apiHelper
-      .fetchGetJson<{
-        isUsing: boolean;
-      }>(
-        `${getApplicationServer()}/api/v1/databases/storage/${storageId}/is-using`,
-        requestOptions,
-        true,
-      )
-      .then((res) => res.isUsing);
-  },
 };

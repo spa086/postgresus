@@ -3,7 +3,8 @@ package restores
 import (
 	"errors"
 	"log/slog"
-	"postgresus-backend/internal/features/backups"
+	"postgresus-backend/internal/features/backups/backups"
+	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/restores/enums"
 	"postgresus-backend/internal/features/restores/models"
@@ -19,8 +20,30 @@ type RestoreService struct {
 	backupService        *backups.BackupService
 	restoreRepository    *RestoreRepository
 	storageService       *storages.StorageService
+	backupConfigService  *backups_config.BackupConfigService
 	restoreBackupUsecase *usecases.RestoreBackupUsecase
 	logger               *slog.Logger
+}
+
+func (s *RestoreService) OnBeforeBackupRemove(backup *backups.Backup) error {
+	restores, err := s.restoreRepository.FindByBackupID(backup.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, restore := range restores {
+		if restore.Status == enums.RestoreStatusInProgress {
+			return errors.New("restore is in progress, backup cannot be removed")
+		}
+	}
+
+	for _, restore := range restores {
+		if err := s.restoreRepository.DeleteByID(restore.ID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *RestoreService) GetRestores(
@@ -110,9 +133,17 @@ func (s *RestoreService) RestoreBackup(
 		return err
 	}
 
+	backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(
+		backup.Database.ID,
+	)
+	if err != nil {
+		return err
+	}
+
 	start := time.Now().UTC()
 
 	err = s.restoreBackupUsecase.Execute(
+		backupConfig,
 		restore,
 		backup,
 		storage,
