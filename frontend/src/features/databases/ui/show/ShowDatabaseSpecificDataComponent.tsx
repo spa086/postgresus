@@ -36,7 +36,7 @@ export const ShowDatabaseSpecificDataComponent = ({ database }: Props) => {
           </div>
 
           <div className="mb-1 flex w-full items-center">
-            <div className="min-w-[150px]">Host</div>
+            <div className="min-w-[150px] break-all">Host</div>
             <div>{database.postgresql?.host || ''}</div>
           </div>
 

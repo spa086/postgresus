@@ -218,7 +218,7 @@ export const DatabaseComponent = ({
             )}
 
             <div className="flex flex-wrap gap-10">
-              <div className="w-[350px]">
+              <div className="w-[400px]">
                 <div className="mt-5 flex items-center font-bold">
                   <div>Database settings</div>
 
@@ -254,7 +254,7 @@ export const DatabaseComponent = ({
                 </div>
               </div>
 
-              <div className="w-[350px]">
+              <div className="w-[400px]">
                 <div className="mt-5 flex items-center font-bold">
                   <div>Backup config</div>
 
@@ -294,7 +294,7 @@ export const DatabaseComponent = ({
             </div>
 
             <div className="flex flex-wrap gap-10">
-              <div className="w-[350px]">
+              <div className="w-[400px]">
                 <div className="mt-5 flex items-center font-bold">
                   <div>Healthcheck settings</div>
 
@@ -325,7 +325,7 @@ export const DatabaseComponent = ({
                 </div>
               </div>
 
-              <div className="w-[350px]">
+              <div className="w-[400px]">
                 <div className="mt-5 flex items-center font-bold">
                   <div>Notifiers settings</div>
 
