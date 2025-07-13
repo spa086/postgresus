@@ -133,6 +133,10 @@ func (s *BackupConfigService) IsStorageUsing(
 	return s.backupConfigRepository.IsStorageUsing(storageID)
 }
 
+func (s *BackupConfigService) GetBackupConfigsWithEnabledBackups() ([]*BackupConfig, error) {
+	return s.backupConfigRepository.GetWithEnabledBackups()
+}
+
 func (s *BackupConfigService) initializeDefaultConfig(
 	databaseID uuid.UUID,
 ) error {
@@ -150,7 +154,9 @@ func (s *BackupConfigService) initializeDefaultConfig(
 			NotificationBackupFailed,
 			NotificationBackupSuccess,
 		},
-		CpuCount: 1,
+		CpuCount:            1,
+		IsRetryIfFailed:     true,
+		MaxFailedTriesCount: 3,
 	})
 
 	return err

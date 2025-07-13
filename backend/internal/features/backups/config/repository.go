@@ -74,7 +74,7 @@ func (r *BackupConfigRepository) FindByDatabaseID(databaseID uuid.UUID) (*Backup
 	return &backupConfig, nil
 }
 
-func (r *BackupConfigRepository) FindWithEnabledBackups() ([]*BackupConfig, error) {
+func (r *BackupConfigRepository) GetWithEnabledBackups() ([]*BackupConfig, error) {
 	var backupConfigs []*BackupConfig
 
 	if err := storage.

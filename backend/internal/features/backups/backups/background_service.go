@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"postgresus-backend/internal/config"
 	backups_config "postgresus-backend/internal/features/backups/config"
-	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/util/period"
 	"time"
@@ -13,9 +12,8 @@ import (
 type BackupBackgroundService struct {
 	backupService       *BackupService
 	backupRepository    *BackupRepository
-	databaseService     *databases.DatabaseService
-	storageService      *storages.StorageService
 	backupConfigService *backups_config.BackupConfigService
+	storageService      *storages.StorageService
 
 	lastBackupTime time.Time
 	logger         *slog.Logger
@@ -51,7 +49,7 @@ func (s *BackupBackgroundService) Run() {
 	}
 }
 
-func (s *BackupBackgroundService) IsBackupsRunning() bool {
+func (s *BackupBackgroundService) IsBackupsWorkerRunning() bool {
 	// if last backup time is more than 5 minutes ago, return false
 	return s.lastBackupTime.After(time.Now().UTC().Add(-5 * time.Minute))
 }
@@ -90,18 +88,12 @@ func (s *BackupBackgroundService) failBackupsInProgress() error {
 }
 
 func (s *BackupBackgroundService) cleanOldBackups() error {
-	allDatabases, err := s.databaseService.GetAllDatabases()
+	enabledBackupConfigs, err := s.backupConfigService.GetBackupConfigsWithEnabledBackups()
 	if err != nil {
 		return err
 	}
 
-	for _, database := range allDatabases {
-		backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(database.ID)
-		if err != nil {
-			s.logger.Error("Failed to get backup config by database ID", "error", err)
-			continue
-		}
-
+	for _, backupConfig := range enabledBackupConfigs {
 		backupStorePeriod := backupConfig.StorePeriod
 
 		if backupStorePeriod == period.PeriodForever {
@@ -112,14 +104,14 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 		dateBeforeBackupsShouldBeDeleted := time.Now().UTC().Add(-storeDuration)
 
 		oldBackups, err := s.backupRepository.FindBackupsBeforeDate(
-			database.ID,
+			backupConfig.DatabaseID,
 			dateBeforeBackupsShouldBeDeleted,
 		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to find old backups for database",
 				"databaseId",
-				database.ID,
+				backupConfig.DatabaseID,
 				"error",
 				err,
 			)
@@ -149,7 +141,13 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 				continue
 			}
 
-			s.logger.Info("Deleted old backup", "backupId", backup.ID, "databaseId", database.ID)
+			s.logger.Info(
+				"Deleted old backup",
+				"backupId",
+				backup.ID,
+				"databaseId",
+				backupConfig.DatabaseID,
+			)
 		}
 	}
 
@@ -157,28 +155,22 @@ func (s *BackupBackgroundService) cleanOldBackups() error {
 }
 
 func (s *BackupBackgroundService) runPendingBackups() error {
-	allDatabases, err := s.databaseService.GetAllDatabases()
+	enabledBackupConfigs, err := s.backupConfigService.GetBackupConfigsWithEnabledBackups()
 	if err != nil {
 		return err
 	}
 
-	for _, database := range allDatabases {
-		backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(database.ID)
-		if err != nil {
-			s.logger.Error("Failed to get backup config by database ID", "error", err)
-			continue
-		}
-
+	for _, backupConfig := range enabledBackupConfigs {
 		if backupConfig.BackupInterval == nil {
 			continue
 		}
 
-		lastBackup, err := s.backupRepository.FindLastByDatabaseID(database.ID)
+		lastBackup, err := s.backupRepository.FindLastByDatabaseID(backupConfig.DatabaseID)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get last backup for database",
 				"databaseId",
-				database.ID,
+				backupConfig.DatabaseID,
 				"error",
 				err,
 			)
@@ -190,19 +182,71 @@ func (s *BackupBackgroundService) runPendingBackups() error {
 			lastBackupTime = &lastBackup.CreatedAt
 		}
 
-		if backupConfig.BackupInterval.ShouldTriggerBackup(time.Now().UTC(), lastBackupTime) {
+		remainedBackupTryCount := s.GetRemainedBackupTryCount(lastBackup)
+
+		if backupConfig.BackupInterval.ShouldTriggerBackup(time.Now().UTC(), lastBackupTime) ||
+			remainedBackupTryCount > 0 {
 			s.logger.Info(
 				"Triggering scheduled backup",
 				"databaseId",
-				database.ID,
+				backupConfig.DatabaseID,
 				"intervalType",
 				backupConfig.BackupInterval.Interval,
 			)
 
-			go s.backupService.MakeBackup(database.ID)
-			s.logger.Info("Successfully triggered scheduled backup", "databaseId", database.ID)
+			go s.backupService.MakeBackup(backupConfig.DatabaseID, remainedBackupTryCount == 1)
+			s.logger.Info(
+				"Successfully triggered scheduled backup",
+				"databaseId",
+				backupConfig.DatabaseID,
+			)
 		}
 	}
 
 	return nil
+}
+
+// GetRemainedBackupTryCount returns the number of remaining backup tries for a given backup.
+// If the backup is not failed or the backup config does not allow retries, it returns 0.
+// If the backup is failed and the backup config allows retries, it returns the number of remaining tries.
+// If the backup is failed and the backup config does not allow retries, it returns 0.
+func (s *BackupBackgroundService) GetRemainedBackupTryCount(lastBackup *Backup) int {
+	if lastBackup == nil {
+		return 0
+	}
+
+	if lastBackup.Status != BackupStatusFailed {
+		return 0
+	}
+
+	backupConfig, err := s.backupConfigService.GetBackupConfigByDbId(lastBackup.DatabaseID)
+	if err != nil {
+		s.logger.Error("Failed to get backup config by database ID", "error", err)
+		return 0
+	}
+
+	if !backupConfig.IsRetryIfFailed {
+		return 0
+	}
+
+	maxFailedTriesCount := backupConfig.MaxFailedTriesCount
+
+	lastBackups, err := s.backupRepository.FindByDatabaseIDWithLimit(
+		lastBackup.DatabaseID,
+		maxFailedTriesCount,
+	)
+	if err != nil {
+		s.logger.Error("Failed to find last backups by database ID", "error", err)
+		return 0
+	}
+
+	lastFailedBackups := make([]*Backup, 0)
+
+	for _, backup := range lastBackups {
+		if backup.Status == BackupStatusFailed {
+			lastFailedBackups = append(lastFailedBackups, backup)
+		}
+	}
+
+	return maxFailedTriesCount - len(lastFailedBackups)
 }

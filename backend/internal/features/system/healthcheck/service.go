@@ -29,7 +29,7 @@ func (s *HealthcheckService) IsHealthy() error {
 		return errors.New("cannot connect to the database")
 	}
 
-	if !s.backupBackgroundService.IsBackupsRunning() {
+	if !s.backupBackgroundService.IsBackupsWorkerRunning() {
 		return errors.New("backups are not running for more than 5 minutes")
 	}
 

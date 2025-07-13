@@ -52,7 +52,7 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			}),
 		).Once()
 
-		backupService.MakeBackup(database.ID)
+		backupService.MakeBackup(database.ID, true)
 
 		// Verify all expectations were met
 		mockNotificationSender.AssertExpectations(t)
@@ -84,7 +84,7 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			[]BackupRemoveListener{},
 		}
 
-		backupService.MakeBackup(database.ID)
+		backupService.MakeBackup(database.ID, true)
 
 		// Verify all expectations were met
 		mockNotificationSender.AssertExpectations(t)
@@ -119,7 +119,7 @@ func Test_BackupExecuted_NotificationSent(t *testing.T) {
 			capturedMessage = args.Get(2).(string)
 		}).Once()
 
-		backupService.MakeBackup(database.ID)
+		backupService.MakeBackup(database.ID, true)
 
 		// Verify expectations were met
 		mockNotificationSender.AssertExpectations(t)

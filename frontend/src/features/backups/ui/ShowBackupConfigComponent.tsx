@@ -135,6 +135,18 @@ export const ShowBackupConfigComponent = ({ database }: Props) => {
           )}
 
           <div className="mb-1 flex w-full items-center">
+            <div className="min-w-[150px]">Retry if failed</div>
+            <div>{backupConfig.isRetryIfFailed ? 'Yes' : 'No'}</div>
+          </div>
+
+          {backupConfig.isRetryIfFailed && (
+            <div className="mb-1 flex w-full items-center">
+              <div className="min-w-[150px]">Max failed tries count</div>
+              <div>{backupConfig.maxFailedTriesCount}</div>
+            </div>
+          )}
+
+          <div className="mb-1 flex w-full items-center">
             <div className="min-w-[150px]">Store period</div>
             <div>{backupConfig.storePeriod ? periodLabels[backupConfig.storePeriod] : ''}</div>
           </div>

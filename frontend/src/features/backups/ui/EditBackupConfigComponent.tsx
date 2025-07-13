@@ -151,6 +151,8 @@ export const EditBackupConfigComponent = ({
         cpuCount: 1,
         storePeriod: Period.WEEK,
         sendNotificationsOn: [],
+        isRetryIfFailed: true,
+        maxFailedTriesCount: 3,
       });
     }
     loadStorages();
@@ -286,6 +288,43 @@ export const EditBackupConfigComponent = ({
                   saveInterval(patch);
                 }}
               />
+            </div>
+          )}
+
+          <div className="mt-4 mb-1 flex w-full items-center">
+            <div className="min-w-[150px]">Retry backup if failed</div>
+            <Switch
+              size="small"
+              checked={backupConfig.isRetryIfFailed}
+              onChange={(checked) => updateBackupConfig({ isRetryIfFailed: checked })}
+            />
+
+            <Tooltip
+              className="cursor-pointer"
+              title="Automatically retry failed backups. Backups can fail due to network failures, storage issues or temporary database unavailability."
+            >
+              <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
+            </Tooltip>
+          </div>
+
+          {backupConfig.isRetryIfFailed && (
+            <div className="mb-1 flex w-full items-center">
+              <div className="min-w-[150px]">Max failed tries count</div>
+              <InputNumber
+                min={1}
+                max={10}
+                value={backupConfig.maxFailedTriesCount}
+                onChange={(value) => updateBackupConfig({ maxFailedTriesCount: value || 1 })}
+                size="small"
+                className="max-w-[200px] grow"
+              />
+
+              <Tooltip
+                className="cursor-pointer"
+                title="Maximum number of retry attempts for failed backups. You will receive a notification when all tries have failed."
+              >
+                <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
+              </Tooltip>
             </div>
           )}
 

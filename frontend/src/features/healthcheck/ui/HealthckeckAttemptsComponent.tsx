@@ -78,29 +78,31 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
   };
 
   useEffect(() => {
-    let isHealthcheckEnabled = false;
+    let interval: number | null = null;
 
     setIsHealthcheckConfigLoading(true);
     healthcheckConfigApi.getHealthcheckConfig(database.id).then((healthcheckConfig) => {
       setIsHealthcheckConfigLoading(false);
 
       if (healthcheckConfig.isHealthcheckEnabled) {
-        isHealthcheckEnabled = true;
         setIsShowHealthcheckConfig(true);
-
         loadHealthcheckAttempts();
+
+        // Set up interval only if healthcheck
+        // is enabled and period is 'today'
+        if (period === 'today') {
+          interval = setInterval(() => {
+            loadHealthcheckAttempts(false);
+          }, 60_000); // 5 seconds
+        }
       }
     });
 
-    if (period === 'today') {
-      if (isHealthcheckEnabled) {
-        const interval = setInterval(() => {
-          loadHealthcheckAttempts(false);
-        }, 60_000); // 1 minute
-
-        return () => clearInterval(interval);
+    return () => {
+      if (interval) {
+        clearInterval(interval);
       }
-    }
+    };
   }, [period]);
 
   if (isHealthcheckConfigLoading) {

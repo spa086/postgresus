@@ -18,6 +18,7 @@ import (
 
 func Test_CheckPgHealthUseCase(t *testing.T) {
 	user := users.GetTestUser()
+
 	storage := storages.CreateTestStorage(user.UserID)
 	notifier := notifiers.CreateTestNotifier(user.UserID)
 

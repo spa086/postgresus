@@ -27,6 +27,9 @@ type BackupConfig struct {
 	SendNotificationsOn       []BackupNotificationType `json:"sendNotificationsOn" gorm:"-"`
 	SendNotificationsOnString string                   `json:"-"                   gorm:"column:send_notifications_on;type:text;not null"`
 
+	IsRetryIfFailed     bool `json:"isRetryIfFailed"     gorm:"column:is_retry_if_failed;type:boolean;not null"`
+	MaxFailedTriesCount int  `json:"maxFailedTriesCount" gorm:"column:max_failed_tries_count;type:int;not null"`
+
 	CpuCount int `json:"cpuCount" gorm:"type:int;not null"`
 }
 
@@ -79,6 +82,10 @@ func (b *BackupConfig) Validate() error {
 
 	if b.CpuCount == 0 {
 		return errors.New("cpu count is required")
+	}
+
+	if b.IsRetryIfFailed && b.MaxFailedTriesCount <= 0 {
+		return errors.New("max failed tries count must be greater than 0")
 	}
 
 	return nil

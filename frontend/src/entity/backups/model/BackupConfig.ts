@@ -12,4 +12,6 @@ export interface BackupConfig {
   storage?: Storage;
   sendNotificationsOn: BackupNotificationType[];
   cpuCount: number;
+  isRetryIfFailed: boolean;
+  maxFailedTriesCount: number;
 }

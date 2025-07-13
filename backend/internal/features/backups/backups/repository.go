@@ -1,6 +1,7 @@
 package backups
 
 import (
+	"errors"
 	"postgresus-backend/internal/storage"
 
 	"time"
@@ -36,6 +37,30 @@ func (r *BackupRepository) FindByDatabaseID(databaseID uuid.UUID) ([]*Backup, er
 		Preload("Storage").
 		Where("database_id = ?", databaseID).
 		Order("created_at DESC").
+		Find(&backups).Error; err != nil {
+		return nil, err
+	}
+
+	return backups, nil
+}
+
+func (r *BackupRepository) FindByDatabaseIDWithLimit(
+	databaseID uuid.UUID,
+	limit int,
+) ([]*Backup, error) {
+	if limit <= 0 {
+		return nil, errors.New("limit must be greater than 0")
+	}
+
+	var backups []*Backup
+
+	if err := storage.
+		GetDb().
+		Preload("Database").
+		Preload("Storage").
+		Where("database_id = ?", databaseID).
+		Order("created_at DESC").
+		Limit(limit).
 		Find(&backups).Error; err != nil {
 		return nil, err
 	}

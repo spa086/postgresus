@@ -68,7 +68,7 @@ func (s *BackupService) MakeBackupWithAuth(
 		return errors.New("user does not have access to this database")
 	}
 
-	go s.MakeBackup(databaseID)
+	go s.MakeBackup(databaseID, true)
 
 	return nil
 }
@@ -114,7 +114,7 @@ func (s *BackupService) DeleteBackup(
 	return s.deleteBackup(backup)
 }
 
-func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
+func (s *BackupService) MakeBackup(databaseID uuid.UUID, isLastTry bool) {
 	database, err := s.databaseService.GetDatabaseByID(databaseID)
 	if err != nil {
 		s.logger.Error("Failed to get database by ID", "error", err)
@@ -242,6 +242,10 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID) {
 			"error",
 			updateErr,
 		)
+	}
+
+	if !isLastTry {
+		return
 	}
 
 	s.SendBackupNotification(
