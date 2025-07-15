@@ -25,8 +25,8 @@ type EmailNotifier struct {
 	TargetEmail  string    `json:"targetEmail"  gorm:"not null;type:varchar(255);column:target_email"`
 	SMTPHost     string    `json:"smtpHost"     gorm:"not null;type:varchar(255);column:smtp_host"`
 	SMTPPort     int       `json:"smtpPort"     gorm:"not null;column:smtp_port"`
-	SMTPUser     string    `json:"smtpUser"     gorm:"not null;type:varchar(255);column:smtp_user"`
-	SMTPPassword string    `json:"smtpPassword" gorm:"not null;type:varchar(255);column:smtp_password"`
+	SMTPUser     string    `json:"smtpUser"     gorm:"type:varchar(255);column:smtp_user"`
+	SMTPPassword string    `json:"smtpPassword" gorm:"type:varchar(255);column:smtp_password"`
 }
 
 func (e *EmailNotifier) TableName() string {
@@ -46,12 +46,9 @@ func (e *EmailNotifier) Validate() error {
 		return errors.New("SMTP port is required")
 	}
 
-	if e.SMTPUser == "" {
-		return errors.New("SMTP user is required")
-	}
-
-	if e.SMTPPassword == "" {
-		return errors.New("SMTP password is required")
+	// Authentication is optional - both user and password must be provided together or both empty
+	if (e.SMTPUser == "") != (e.SMTPPassword == "") {
+		return errors.New("SMTP user and password must both be provided or both be empty")
 	}
 
 	return nil
@@ -60,6 +57,10 @@ func (e *EmailNotifier) Validate() error {
 func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string) error {
 	// Compose email
 	from := e.SMTPUser
+	if from == "" {
+		from = "noreply@" + e.SMTPHost
+	}
+
 	to := []string{e.TargetEmail}
 
 	// Format the email content
@@ -77,6 +78,9 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 
 	addr := net.JoinHostPort(e.SMTPHost, fmt.Sprintf("%d", e.SMTPPort))
 	timeout := DefaultTimeout
+
+	// Determine if authentication is required
+	authRequired := e.SMTPUser != "" && e.SMTPPassword != ""
 
 	// Handle different port scenarios
 	if e.SMTPPort == ImplicitTLSPort {
@@ -105,10 +109,12 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 			_ = client.Quit()
 		}()
 
-		// Set up authentication
-		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
-		if err := client.Auth(auth); err != nil {
-			return fmt.Errorf("SMTP authentication failed: %w", err)
+		// Set up authentication only if credentials are provided
+		if authRequired {
+			auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
+			if err := client.Auth(auth); err != nil {
+				return fmt.Errorf("SMTP authentication failed: %w", err)
+			}
 		}
 
 		// Set sender and recipients
@@ -138,9 +144,6 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 		return nil
 	} else {
 		// STARTTLS (port 587) or other ports
-		// Set up authentication information
-		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
-
 		// Create a custom dialer with timeout
 		dialer := &net.Dialer{Timeout: timeout}
 		conn, err := dialer.Dial("tcp", addr)
@@ -169,8 +172,12 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 			}
 		}
 
-		if err := client.Auth(auth); err != nil {
-			return fmt.Errorf("SMTP authentication failed: %w", err)
+		// Authenticate only if credentials are provided
+		if authRequired {
+			auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
+			if err := client.Auth(auth); err != nil {
+				return fmt.Errorf("SMTP authentication failed: %w", err)
+			}
 		}
 
 		if err := client.Mail(from); err != nil {

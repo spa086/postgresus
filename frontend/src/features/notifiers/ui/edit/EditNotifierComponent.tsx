@@ -72,9 +72,12 @@ export function EditNotifierComponent({
       });
     } catch (e) {
       alert((e as Error).message);
-      alert(
-        'Make sure channel is public or bot is added to the private channel (via @invite) or group. For direct messages use User ID from Slack profile.',
-      );
+
+      if (notifier.notifierType === NotifierType.SLACK) {
+        alert(
+          'Make sure channel is public or bot is added to the private channel (via @invite) or group. For direct messages use User ID from Slack profile.',
+        );
+      }
     }
 
     setIsSendingTestNotification(false);

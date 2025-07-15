@@ -13,13 +13,5 @@ export const validateEmailNotifier = (notifier: EmailNotifier): boolean => {
     return false;
   }
 
-  if (!notifier.smtpUser) {
-    return false;
-  }
-
-  if (!notifier.smtpPassword) {
-    return false;
-  }
-
   return true;
 };
