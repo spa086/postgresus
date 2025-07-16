@@ -80,7 +80,7 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 	timeout := DefaultTimeout
 
 	// Determine if authentication is required
-	authRequired := e.SMTPUser != "" && e.SMTPPassword != ""
+	isAuthRequired := e.SMTPUser != "" && e.SMTPPassword != ""
 
 	// Handle different port scenarios
 	if e.SMTPPort == ImplicitTLSPort {
@@ -110,7 +110,7 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 		}()
 
 		// Set up authentication only if credentials are provided
-		if authRequired {
+		if isAuthRequired {
 			auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
 			if err := client.Auth(auth); err != nil {
 				return fmt.Errorf("SMTP authentication failed: %w", err)
@@ -173,7 +173,7 @@ func (e *EmailNotifier) Send(logger *slog.Logger, heading string, message string
 		}
 
 		// Authenticate only if credentials are provided
-		if authRequired {
+		if isAuthRequired {
 			auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPassword, e.SMTPHost)
 			if err := client.Auth(auth); err != nil {
 				return fmt.Errorf("SMTP authentication failed: %w", err)

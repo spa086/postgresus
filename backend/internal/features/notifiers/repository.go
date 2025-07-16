@@ -30,17 +30,33 @@ func (r *NotifierRepository) Save(notifier *Notifier) (*Notifier, error) {
 			if notifier.SlackNotifier != nil {
 				notifier.SlackNotifier.NotifierID = notifier.ID
 			}
+		case NotifierTypeDiscord:
+			if notifier.DiscordNotifier != nil {
+				notifier.DiscordNotifier.NotifierID = notifier.ID
+			}
 		}
 
 		if notifier.ID == uuid.Nil {
 			if err := tx.Create(notifier).
-				Omit("TelegramNotifier", "EmailNotifier", "WebhookNotifier", "SlackNotifier").
+				Omit(
+					"TelegramNotifier",
+					"EmailNotifier",
+					"WebhookNotifier",
+					"SlackNotifier",
+					"DiscordNotifier",
+				).
 				Error; err != nil {
 				return err
 			}
 		} else {
 			if err := tx.Save(notifier).
-				Omit("TelegramNotifier", "EmailNotifier", "WebhookNotifier", "SlackNotifier").
+				Omit(
+					"TelegramNotifier",
+					"EmailNotifier",
+					"WebhookNotifier",
+					"SlackNotifier",
+					"DiscordNotifier",
+				).
 				Error; err != nil {
 				return err
 			}
@@ -75,6 +91,13 @@ func (r *NotifierRepository) Save(notifier *Notifier) (*Notifier, error) {
 					return err
 				}
 			}
+		case NotifierTypeDiscord:
+			if notifier.DiscordNotifier != nil {
+				notifier.DiscordNotifier.NotifierID = notifier.ID // Ensure ID is set
+				if err := tx.Save(notifier.DiscordNotifier).Error; err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
@@ -96,6 +119,7 @@ func (r *NotifierRepository) FindByID(id uuid.UUID) (*Notifier, error) {
 		Preload("EmailNotifier").
 		Preload("WebhookNotifier").
 		Preload("SlackNotifier").
+		Preload("DiscordNotifier").
 		Where("id = ?", id).
 		First(&notifier).Error; err != nil {
 		return nil, err
@@ -113,7 +137,9 @@ func (r *NotifierRepository) FindByUserID(userID uuid.UUID) ([]*Notifier, error)
 		Preload("EmailNotifier").
 		Preload("WebhookNotifier").
 		Preload("SlackNotifier").
+		Preload("DiscordNotifier").
 		Where("user_id = ?", userID).
+		Order("name ASC").
 		Find(&notifiers).Error; err != nil {
 		return nil, err
 	}
@@ -146,6 +172,12 @@ func (r *NotifierRepository) Delete(notifier *Notifier) error {
 		case NotifierTypeSlack:
 			if notifier.SlackNotifier != nil {
 				if err := tx.Delete(notifier.SlackNotifier).Error; err != nil {
+					return err
+				}
+			}
+		case NotifierTypeDiscord:
+			if notifier.DiscordNotifier != nil {
+				if err := tx.Delete(notifier.DiscordNotifier).Error; err != nil {
 					return err
 				}
 			}

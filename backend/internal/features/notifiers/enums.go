@@ -7,4 +7,5 @@ const (
 	NotifierTypeTelegram NotifierType = "TELEGRAM"
 	NotifierTypeWebhook  NotifierType = "WEBHOOK"
 	NotifierTypeSlack    NotifierType = "SLACK"
+	NotifierTypeDiscord  NotifierType = "DISCORD"
 )

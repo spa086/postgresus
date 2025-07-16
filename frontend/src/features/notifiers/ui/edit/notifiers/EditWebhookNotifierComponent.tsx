@@ -34,13 +34,6 @@ export function EditWebhookNotifierComponent({ notifier, setNotifier, setIsUnsav
             placeholder="https://example.com/webhook"
           />
         </div>
-
-        <Tooltip
-          className="cursor-pointer"
-          title="The URL that will be called when a notification is triggered"
-        >
-          <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
-        </Tooltip>
       </div>
 
       <div className="mt-1 flex items-center">

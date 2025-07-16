@@ -3,6 +3,7 @@ package notifiers
 import (
 	"errors"
 	"log/slog"
+	discord_notifier "postgresus-backend/internal/features/notifiers/models/discord"
 	"postgresus-backend/internal/features/notifiers/models/email_notifier"
 	slack_notifier "postgresus-backend/internal/features/notifiers/models/slack"
 	telegram_notifier "postgresus-backend/internal/features/notifiers/models/telegram"
@@ -23,6 +24,7 @@ type Notifier struct {
 	EmailNotifier    *email_notifier.EmailNotifier       `json:"emailNotifier"    gorm:"foreignKey:NotifierID"`
 	WebhookNotifier  *webhook_notifier.WebhookNotifier   `json:"webhookNotifier"  gorm:"foreignKey:NotifierID"`
 	SlackNotifier    *slack_notifier.SlackNotifier       `json:"slackNotifier"    gorm:"foreignKey:NotifierID"`
+	DiscordNotifier  *discord_notifier.DiscordNotifier   `json:"discordNotifier"  gorm:"foreignKey:NotifierID"`
 }
 
 func (n *Notifier) TableName() string {
@@ -60,6 +62,8 @@ func (n *Notifier) getSpecificNotifier() NotificationSender {
 		return n.WebhookNotifier
 	case NotifierTypeSlack:
 		return n.SlackNotifier
+	case NotifierTypeDiscord:
+		return n.DiscordNotifier
 	default:
 		panic("unknown notifier type: " + string(n.NotifierType))
 	}

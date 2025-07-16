@@ -10,6 +10,8 @@ export const getNotifierLogoFromType = (type: NotifierType) => {
       return '/icons/notifiers/webhook.svg';
     case NotifierType.SLACK:
       return '/icons/notifiers/slack.svg';
+    case NotifierType.DISCORD:
+      return '/icons/notifiers/discord.svg';
     default:
       return '';
   }

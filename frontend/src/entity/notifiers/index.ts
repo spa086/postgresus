@@ -14,3 +14,6 @@ export { WebhookMethod } from './models/webhook/WebhookMethod';
 
 export type { SlackNotifier } from './models/slack/SlackNotifier';
 export { validateSlackNotifier } from './models/slack/validateSlackNotifier';
+
+export type { DiscordNotifier } from './models/discord/DiscordNotifier';
+export { validateDiscordNotifier } from './models/discord/validateDiscordNotifier';

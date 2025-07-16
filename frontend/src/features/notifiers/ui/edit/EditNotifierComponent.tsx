@@ -6,6 +6,7 @@ import {
   NotifierType,
   WebhookMethod,
   notifierApi,
+  validateDiscordNotifier,
   validateEmailNotifier,
   validateSlackNotifier,
   validateTelegramNotifier,
@@ -13,6 +14,7 @@ import {
 } from '../../../../entity/notifiers';
 import { getNotifierLogoFromType } from '../../../../entity/notifiers/models/getNotifierLogoFromType';
 import { ToastHelper } from '../../../../shared/toast';
+import { EditDiscordNotifierComponent } from './notifiers/EditDiscordNotifierComponent';
 import { EditEmailNotifierComponent } from './notifiers/EditEmailNotifierComponent';
 import { EditSlackNotifierComponent } from './notifiers/EditSlackNotifierComponent';
 import { EditTelegramNotifierComponent } from './notifiers/EditTelegramNotifierComponent';
@@ -120,6 +122,12 @@ export function EditNotifierComponent({
       };
     }
 
+    if (type === NotifierType.DISCORD) {
+      notifier.discordNotifier = {
+        channelWebhookUrl: '',
+      };
+    }
+
     setNotifier(
       JSON.parse(
         JSON.stringify({
@@ -171,6 +179,10 @@ export function EditNotifierComponent({
       return validateSlackNotifier(notifier.slackNotifier);
     }
 
+    if (notifier.notifierType === NotifierType.DISCORD && notifier.discordNotifier) {
+      return validateDiscordNotifier(notifier.discordNotifier);
+    }
+
     return false;
   };
 
@@ -205,6 +217,7 @@ export function EditNotifierComponent({
             { label: 'Email', value: NotifierType.EMAIL },
             { label: 'Webhook', value: NotifierType.WEBHOOK },
             { label: 'Slack', value: NotifierType.SLACK },
+            { label: 'Discord', value: NotifierType.DISCORD },
           ]}
           onChange={(value) => {
             setNotifierType(value);
@@ -246,6 +259,14 @@ export function EditNotifierComponent({
 
         {notifier?.notifierType === NotifierType.SLACK && (
           <EditSlackNotifierComponent
+            notifier={notifier}
+            setNotifier={setNotifier}
+            setIsUnsaved={setIsUnsaved}
+          />
+        )}
+
+        {notifier?.notifierType === NotifierType.DISCORD && (
+          <EditDiscordNotifierComponent
             notifier={notifier}
             setNotifier={setNotifier}
             setIsUnsaved={setIsUnsaved}
