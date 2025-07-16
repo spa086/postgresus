@@ -91,7 +91,7 @@ services:
     ports:
       - "4005:4005"
     volumes:
-      - ./postgresus-data:/app/postgresus-data
+      - ./postgresus-data:/postgresus-data
     depends_on:
       postgresus-db:
         condition: service_healthy

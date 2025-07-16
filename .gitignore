@@ -3,3 +3,4 @@ postgresus-data/
 .env
 pgdata/
 docker-compose.yml
+node_modules/
