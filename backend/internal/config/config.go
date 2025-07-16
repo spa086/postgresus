@@ -128,7 +128,7 @@ func loadEnvVariables() {
 
 	// Store the data and temp folders one level below the root
 	// (projectRoot/postgresus-data -> /postgresus-data)
-	env.DataFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "data")
+	env.DataFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "backups")
 	env.TempFolder = filepath.Join(filepath.Dir(backendRoot), "postgresus-data", "temp")
 
 	if env.IsTesting {
