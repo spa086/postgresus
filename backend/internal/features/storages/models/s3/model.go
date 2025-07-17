@@ -1,7 +1,6 @@
 package s3_storage
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -34,19 +33,13 @@ func (s *S3Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Read
 		return err
 	}
 
-	// Read the entire file into memory
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
-
-	// Upload the file using MinIO client
+	// Upload the file using MinIO client with streaming (size = -1 for unknown size)
 	_, err = client.PutObject(
 		context.TODO(),
 		s.S3Bucket,
 		fileID.String(),
-		bytes.NewReader(data),
-		int64(len(data)),
+		file,
+		-1,
 		minio.PutObjectOptions{},
 	)
 	if err != nil {
