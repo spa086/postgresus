@@ -21,7 +21,7 @@ FROM --platform=$BUILDPLATFORM golang:1.23.3 AS backend-build
 
 # Install Go public tools needed in runtime
 RUN curl -fsSL https://raw.githubusercontent.com/pressly/goose/master/install.sh | sh
-RUN go install github.com/swaggo/swag/cmd/swag@1.16.4
+RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4
 
 # Set working directory
 WORKDIR /app
