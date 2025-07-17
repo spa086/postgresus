@@ -34,10 +34,7 @@ func (s *BackupService) AddBackupRemoveListener(listener BackupRemoveListener) {
 	s.backupRemoveListeners = append(s.backupRemoveListeners, listener)
 }
 
-func (s *BackupService) OnBeforeBackupsStorageChange(
-	databaseID uuid.UUID,
-	storageID uuid.UUID,
-) error {
+func (s *BackupService) OnBeforeBackupsStorageChange(databaseID uuid.UUID) error {
 	err := s.deleteDbBackups(databaseID)
 	if err != nil {
 		return err

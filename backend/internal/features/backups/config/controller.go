@@ -32,8 +32,8 @@ func (c *BackupConfigController) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 500
 // @Router /backup-configs/save [post]
 func (c *BackupConfigController) SaveBackupConfig(ctx *gin.Context) {
-	var request BackupConfig
-	if err := ctx.ShouldBindJSON(&request); err != nil {
+	var requestDTO BackupConfig
+	if err := ctx.ShouldBindJSON(&requestDTO); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -44,13 +44,16 @@ func (c *BackupConfigController) SaveBackupConfig(ctx *gin.Context) {
 		return
 	}
 
-	_, err := c.userService.GetUserFromToken(authorizationHeader)
+	user, err := c.userService.GetUserFromToken(authorizationHeader)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 		return
 	}
 
-	savedConfig, err := c.backupConfigService.SaveBackupConfig(&request)
+	// make sure we rely on full .Storage object
+	requestDTO.StorageID = nil
+
+	savedConfig, err := c.backupConfigService.SaveBackupConfigWithAuth(user, &requestDTO)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
