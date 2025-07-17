@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"postgresus-backend/internal/util/tools"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -93,12 +94,48 @@ func testSingleDatabaseConnection(
 		}
 	}()
 
+	// Check version after successful connection
+	if err := verifyDatabaseVersion(ctx, conn, postgresDb.Version); err != nil {
+		return err
+	}
+
 	// Test if we can perform basic operations (like pg_dump would need)
 	if err := testBasicOperations(ctx, conn, *postgresDb.Database); err != nil {
 		return fmt.Errorf(
 			"basic operations test failed for database '%s': %w",
 			*postgresDb.Database,
 			err,
+		)
+	}
+
+	return nil
+}
+
+// verifyDatabaseVersion checks if the actual database version matches the specified version
+func verifyDatabaseVersion(
+	ctx context.Context,
+	conn *pgx.Conn,
+	expectedVersion tools.PostgresqlVersion,
+) error {
+	var versionStr string
+	err := conn.QueryRow(ctx, "SELECT version()").Scan(&versionStr)
+	if err != nil {
+		return fmt.Errorf("failed to query database version: %w", err)
+	}
+
+	// Parse version from string like "PostgreSQL 14.2 on x86_64-pc-linux-gnu..."
+	re := regexp.MustCompile(`PostgreSQL (\d+)\.`)
+	matches := re.FindStringSubmatch(versionStr)
+	if len(matches) < 2 {
+		return fmt.Errorf("could not parse version from: %s", versionStr)
+	}
+
+	actualVersion := tools.GetPostgresqlVersionEnum(matches[1])
+	if actualVersion != expectedVersion {
+		return fmt.Errorf(
+			"you specified wrong version. Real version is %s, but you specified %s",
+			actualVersion,
+			expectedVersion,
 		)
 	}
 

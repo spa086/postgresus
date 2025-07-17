@@ -2,6 +2,7 @@ package restores
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"postgresus-backend/internal/features/backups/backups"
 	backups_config "postgresus-backend/internal/features/backups/config"
@@ -11,6 +12,7 @@ import (
 	"postgresus-backend/internal/features/restores/usecases"
 	"postgresus-backend/internal/features/storages"
 	users_models "postgresus-backend/internal/features/users/models"
+	"postgresus-backend/internal/util/tools"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +24,7 @@ type RestoreService struct {
 	storageService       *storages.StorageService
 	backupConfigService  *backups_config.BackupConfigService
 	restoreBackupUsecase *usecases.RestoreBackupUsecase
+	databaseService      *databases.DatabaseService
 	logger               *slog.Logger
 }
 
@@ -74,6 +77,26 @@ func (s *RestoreService) RestoreBackupWithAuth(
 
 	if backup.Database.UserID != user.ID {
 		return errors.New("user does not have access to this backup")
+	}
+
+	backupDatabase, err := s.databaseService.GetDatabase(user, backup.DatabaseID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf(
+		"restore from %s to %s\n",
+		backupDatabase.Postgresql.Version,
+		requestDTO.PostgresqlDatabase.Version,
+	)
+
+	if tools.IsBackupDbVersionHigherThanRestoreDbVersion(
+		backupDatabase.Postgresql.Version,
+		requestDTO.PostgresqlDatabase.Version,
+	) {
+		return errors.New(`backup database version is higher than restore database version. ` +
+			`Should be restored to the same version as the backup database or higher. ` +
+			`For example, you can restore PG 15 backup to PG 15, 16 or higher. But cannot restore to 14 and lower`)
 	}
 
 	go func() {

@@ -13,7 +13,7 @@ import (
 )
 
 type DiscordNotifier struct {
-	NotifierID        uuid.UUID `json:"notifierId" gorm:"primaryKey;column:notifier_id"`
+	NotifierID        uuid.UUID `json:"notifierId"        gorm:"primaryKey;column:notifier_id"`
 	ChannelWebhookURL string    `json:"channelWebhookUrl" gorm:"not null;column:channel_webhook_url"`
 }
 

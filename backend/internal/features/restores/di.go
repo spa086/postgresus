@@ -3,6 +3,7 @@ package restores
 import (
 	"postgresus-backend/internal/features/backups/backups"
 	backups_config "postgresus-backend/internal/features/backups/config"
+	"postgresus-backend/internal/features/databases"
 	"postgresus-backend/internal/features/restores/usecases"
 	"postgresus-backend/internal/features/storages"
 	"postgresus-backend/internal/features/users"
@@ -16,6 +17,7 @@ var restoreService = &RestoreService{
 	storages.GetStorageService(),
 	backups_config.GetBackupConfigService(),
 	usecases.GetRestoreBackupUsecase(),
+	databases.GetDatabaseService(),
 	logger.GetLogger(),
 }
 var restoreController = &RestoreController{

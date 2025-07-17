@@ -26,7 +26,6 @@ interface Props {
 
   isShowDbVersionHint?: boolean;
   isShowDbName?: boolean;
-  isBlockDbName?: boolean;
 }
 
 export const EditDatabaseSpecificDataComponent = ({
@@ -44,8 +43,6 @@ export const EditDatabaseSpecificDataComponent = ({
 
   isShowDbVersionHint = true,
   isShowDbName = true,
-
-  isBlockDbName = false,
 }: Props) => {
   const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
@@ -266,7 +263,6 @@ export const EditDatabaseSpecificDataComponent = ({
                 size="small"
                 className="max-w-[200px] grow"
                 placeholder="Enter PG database name (optional)"
-                disabled={isBlockDbName}
               />
             </div>
           )}

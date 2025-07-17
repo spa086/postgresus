@@ -1,6 +1,9 @@
 package tools
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type PostgresqlVersion string
 
@@ -34,4 +37,20 @@ func GetPostgresqlVersionEnum(version string) PostgresqlVersion {
 	default:
 		panic(fmt.Sprintf("invalid postgresql version: %s", version))
 	}
+}
+
+func IsBackupDbVersionHigherThanRestoreDbVersion(
+	backupDbVersion, restoreDbVersion PostgresqlVersion,
+) bool {
+	backupDbVersionInt, err := strconv.Atoi(string(backupDbVersion))
+	if err != nil {
+		return false
+	}
+
+	restoreDbVersionInt, err := strconv.Atoi(string(restoreDbVersion))
+	if err != nil {
+		return false
+	}
+
+	return backupDbVersionInt > restoreDbVersionInt
 }

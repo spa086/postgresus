@@ -88,8 +88,9 @@ export const RestoresComponent = ({ database, backup }: Props) => {
       return (
         <>
           <div className="my-5 text-sm">
-            Enter info of the database we will restore backup to. During the restore,{' '}
-            <u>all the current data will be cleared</u>
+            Enter info of the database we will restore backup to.{' '}
+            <u>The empty database for restore should be created before the restore</u>. During the
+            restore, all the current data will be cleared
             <br />
             <br />
             Make sure the database is not used right now (most likely you do not want to restore the
@@ -108,7 +109,6 @@ export const RestoresComponent = ({ database, backup }: Props) => {
               restore(database);
             }}
             isShowDbVersionHint={false}
-            isBlockDbName
           />
         </>
       );
@@ -203,20 +203,22 @@ export const RestoresComponent = ({ database, backup }: Props) => {
                     </div>
                   </div>
 
-                  <div className="flex">
-                    <div className="w-[75px] min-w-[75px]">Duration</div>
-                    <div>
-                      <div>{duration}</div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        Expected restoration time usually 3x-5x longer than the backup duration
-                        (sometimes less, sometimes more depending on data type)
-                        <br />
-                        <br />
-                        So it is expected to take up to {expectedRestoreDuration} (usually
-                        significantly faster)
+                  {restore.status === RestoreStatus.IN_PROGRESS && (
+                    <div className="flex">
+                      <div className="w-[75px] min-w-[75px]">Duration</div>
+                      <div>
+                        <div>{duration}</div>
+                        <div className="mt-2 text-xs text-gray-500">
+                          Expected restoration time usually 3x-5x longer than the backup duration
+                          (sometimes less, sometimes more depending on data type)
+                          <br />
+                          <br />
+                          So it is expected to take up to {expectedRestoreDuration} (usually
+                          significantly faster)
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
