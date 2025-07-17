@@ -21,7 +21,7 @@ FROM --platform=$BUILDPLATFORM golang:1.23.3 AS backend-build
 
 # Install Go public tools needed in runtime
 RUN curl -fsSL https://raw.githubusercontent.com/pressly/goose/master/install.sh | sh
-RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN go install github.com/swaggo/swag/cmd/swag@1.16.4
 
 # Set working directory
 WORKDIR /app
@@ -64,14 +64,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
        postgresql-client-13 postgresql-client-14 postgresql-client-15 \
        postgresql-client-16 postgresql-client-17 && \
     rm -rf /var/lib/apt/lists/*
-
-# Create symlinks for PostgreSQL client tools
-RUN for v in 13 14 15 16 17; do \
-      mkdir -p /usr/pgsql-$v/bin && \
-      for b in pg_dump psql pg_restore createdb dropdb; do \
-        ln -sf /usr/bin/$b /usr/pgsql-$v/bin/$b; \
-      done; \
-    done
 
 WORKDIR /app
 

@@ -161,6 +161,6 @@ func getPostgresqlBasePath(
 			"bin",
 		)
 	} else {
-		return fmt.Sprintf("/usr/pgsql-%s/bin", string(version))
+		return fmt.Sprintf("/usr/lib/postgresql/%s/bin", string(version))
 	}
 }
