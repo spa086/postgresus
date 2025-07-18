@@ -154,6 +154,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-To see diagrams it is recommended to install "Markdown Preview Enhanced" plugin
+Contributions are welcome! Read [contributing guide](contribute/readme.md) for more details, prioerities and rules are specified there.

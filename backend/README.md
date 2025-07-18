@@ -5,6 +5,7 @@ instead of postgresus-db from docker-compose.yml in the root folder.
 
 > Copy .env.example to .env
 > Copy docker-compose.yml.example to docker-compose.yml (for development only)
+> Go to tools folder and install Postgres versions
 
 # Run
 
@@ -69,4 +70,4 @@ If there are couple of models:
 
 # Project rules
 
-Always use time.Now().UTC() instead of time.Now()
+Read .cursor/rules folder, it contains all the rules for the project.
