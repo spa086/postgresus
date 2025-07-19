@@ -61,6 +61,7 @@ Backups flow:
 - add Yandex Drive
 - think about pg_dumpall / pg_basebackup / WAL backup / incremental backups
 - add encryption for backups
+- add support of PgBouncer
 
 Notifications flow:
 
