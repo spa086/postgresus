@@ -332,7 +332,12 @@ func (s *BackupService) GetBackupFile(
 		return nil, errors.New("user does not have access to this backup")
 	}
 
-	return backup.Storage.GetFile(backup.ID)
+	storage, err := s.storageService.GetStorageByID(backup.StorageID)
+	if err != nil {
+		return nil, err
+	}
+
+	return storage.GetFile(backup.ID)
 }
 
 func (s *BackupService) deleteBackup(backup *Backup) error {

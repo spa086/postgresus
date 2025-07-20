@@ -282,7 +282,7 @@ export const BackupsComponent = ({ database }: Props) => {
         return (
           <div className="flex gap-2 text-lg">
             {record.status === BackupStatus.COMPLETED && (
-              <div>
+              <div className="flex gap-2">
                 {deletingBackupId === record.id ? (
                   <SyncOutlined spin />
                 ) : (
@@ -298,7 +298,7 @@ export const BackupsComponent = ({ database }: Props) => {
                       />
                     </Tooltip>
 
-                    <Tooltip className="ml-3" title="Restore from backup">
+                    <Tooltip title="Restore from backup">
                       <CloudUploadOutlined
                         className="cursor-pointer"
                         onClick={() => {
@@ -310,12 +310,9 @@ export const BackupsComponent = ({ database }: Props) => {
                       />
                     </Tooltip>
 
-                    <Tooltip
-                      className="ml-3"
-                      title="Download backup file. It can be restored manually via pg_restore (from custom format)"
-                    >
+                    <Tooltip title="Download backup file. It can be restored manually via pg_restore (from custom format)">
                       {downloadingBackupId === record.id ? (
-                        <SyncOutlined spin />
+                        <SyncOutlined spin style={{ color: '#0d6efd' }} />
                       ) : (
                         <DownloadOutlined
                           className="cursor-pointer"
