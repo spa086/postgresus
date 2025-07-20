@@ -347,7 +347,15 @@ func (s *BackupService) deleteBackup(backup *Backup) error {
 		}
 	}
 
-	backup.DeleteBackupFromStorage(s.logger)
+	storage, err := s.storageService.GetStorageByID(backup.StorageID)
+	if err != nil {
+		return err
+	}
+
+	err = storage.DeleteFile(backup.ID)
+	if err != nil {
+		return err
+	}
 
 	return s.backupRepository.DeleteByID(backup.ID)
 }
