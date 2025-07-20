@@ -47,11 +47,6 @@ If you need to add some explanation, do it in appropriate place in the code. Or 
 
 Before taking anything more than a couple of lines of code, please write Rostislav via Telegram (@rostislav_dugin) and confirm priority. It is possible that we already have something in the works, it is not needed or it's not project priority.
 
-Deploy flow:
-
-- add support of Kubernetes Helm (in progress by Rostislav Dugin)
-- add devcontainers for backend and frontend
-
 Backups flow:
 
 - add FTP
@@ -70,14 +65,14 @@ Notifications flow:
 
 Extra:
 
+- add linters and formatters on each PR (in progress by Rostislav Dugin)
 - add prettier labels to GitHub README
-- allow to download backup file (via streaming)
-- add linters and formatters on each PR
 - add versioning instead of :latest
 - create pretty website like rybbit.io with demo
 - add HTTPS for Postgresus
 - add simple SQL queries via UI
 - add brute force protection on auth (via local RPS limiter)
+- add support of Kubernetes Helm
 
 Monitoring flow:
 

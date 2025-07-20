@@ -3,6 +3,7 @@ package backups
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	backups_config "postgresus-backend/internal/features/backups/config"
 	"postgresus-backend/internal/features/databases"
@@ -316,6 +317,22 @@ func (s *BackupService) SendBackupNotification(
 
 func (s *BackupService) GetBackup(backupID uuid.UUID) (*Backup, error) {
 	return s.backupRepository.FindByID(backupID)
+}
+
+func (s *BackupService) GetBackupFile(
+	user *users_models.User,
+	backupID uuid.UUID,
+) (io.ReadCloser, error) {
+	backup, err := s.backupRepository.FindByID(backupID)
+	if err != nil {
+		return nil, err
+	}
+
+	if backup.Database.UserID != user.ID {
+		return nil, errors.New("user does not have access to this backup")
+	}
+
+	return backup.Storage.GetFile(backup.ID)
 }
 
 func (s *BackupService) deleteBackup(backup *Backup) error {

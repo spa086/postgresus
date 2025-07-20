@@ -2,6 +2,7 @@ import {
   CheckCircleOutlined,
   CloudUploadOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   SyncOutlined,
@@ -38,6 +39,36 @@ export const BackupsComponent = ({ database }: Props) => {
   const [showingRestoresBackupId, setShowingRestoresBackupId] = useState<string | undefined>();
 
   const isReloadInProgress = useRef(false);
+
+  const [downloadingBackupId, setDownloadingBackupId] = useState<string | undefined>();
+
+  const downloadBackup = async (backupId: string) => {
+    try {
+      const blob = await backupsApi.downloadBackup(backupId);
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Find the backup to get a meaningful filename
+      const backup = backups.find((b) => b.id === backupId);
+      const createdAt = backup ? dayjs(backup.createdAt).format('YYYY-MM-DD_HH-mm-ss') : 'backup';
+      link.download = `${database.name}_backup_${createdAt}.dump`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setDownloadingBackupId(undefined);
+    }
+  };
 
   const loadBackups = async () => {
     if (isReloadInProgress.current) {
@@ -113,6 +144,12 @@ export const BackupsComponent = ({ database }: Props) => {
 
     return () => clearInterval(interval);
   }, [database]);
+
+  useEffect(() => {
+    if (downloadingBackupId) {
+      downloadBackup(downloadingBackupId);
+    }
+  }, [downloadingBackupId]);
 
   const columns: ColumnsType<Backup> = [
     {
@@ -271,6 +308,27 @@ export const BackupsComponent = ({ database }: Props) => {
                           color: '#0d6efd',
                         }}
                       />
+                    </Tooltip>
+
+                    <Tooltip
+                      className="ml-3"
+                      title="Download backup file. It can be restored manually via pg_restore (from custom format)"
+                    >
+                      {downloadingBackupId === record.id ? (
+                        <SyncOutlined spin />
+                      ) : (
+                        <DownloadOutlined
+                          className="cursor-pointer"
+                          onClick={() => {
+                            if (downloadingBackupId) return;
+                            setDownloadingBackupId(record.id);
+                          }}
+                          style={{
+                            opacity: downloadingBackupId ? 0.2 : 1,
+                            color: '#0d6efd',
+                          }}
+                        />
+                      )}
                     </Tooltip>
                   </>
                 )}

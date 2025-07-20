@@ -24,4 +24,8 @@ export const backupsApi = {
   async deleteBackup(id: string) {
     return apiHelper.fetchDeleteRaw(`${getApplicationServer()}/api/v1/backups/${id}`);
   },
+
+  async downloadBackup(id: string): Promise<Blob> {
+    return apiHelper.fetchGetBlob(`${getApplicationServer()}/api/v1/backups/${id}/file`);
+  },
 };

@@ -164,7 +164,6 @@ export const apiHelper = {
     isRetryOnError = false,
   ): Promise<Blob> => {
     const optionsWrapper = (requestOptions ?? new RequestOptions())
-      .addHeader('Content-Type', 'application/json')
       .addHeader('Access-Control-Allow-Methods', 'GET')
       .addHeader('Authorization', accessTokenHelper.getAccessToken());
 

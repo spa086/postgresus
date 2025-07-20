@@ -1,6 +1,8 @@
 package backups
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"postgresus-backend/internal/features/users"
 
@@ -16,6 +18,7 @@ type BackupController struct {
 func (c *BackupController) RegisterRoutes(router *gin.RouterGroup) {
 	router.GET("/backups", c.GetBackups)
 	router.POST("/backups", c.MakeBackup)
+	router.GET("/backups/:id/file", c.GetFile)
 	router.DELETE("/backups/:id", c.DeleteBackup)
 }
 
@@ -138,6 +141,62 @@ func (c *BackupController) DeleteBackup(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+// GetFile
+// @Summary Download a backup file
+// @Description Download the backup file for the specified backup
+// @Tags backups
+// @Param id path string true "Backup ID"
+// @Success 200 {file} file
+// @Failure 400
+// @Failure 401
+// @Failure 500
+// @Router /backups/{id}/file [get]
+func (c *BackupController) GetFile(ctx *gin.Context) {
+	id, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid backup ID"})
+		return
+	}
+
+	authorizationHeader := ctx.GetHeader("Authorization")
+	if authorizationHeader == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header is required"})
+		return
+	}
+
+	user, err := c.userService.GetUserFromToken(authorizationHeader)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	fileReader, err := c.backupService.GetBackupFile(user, id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer func() {
+		if err := fileReader.Close(); err != nil {
+			// Log the error but don't interrupt the response
+			fmt.Printf("Error closing file reader: %v\n", err)
+		}
+	}()
+
+	// Set headers for file download
+	ctx.Header("Content-Type", "application/octet-stream")
+	ctx.Header(
+		"Content-Disposition",
+		fmt.Sprintf("attachment; filename=\"backup_%s.dump\"", id.String()),
+	)
+
+	// Stream the file content
+	_, err = io.Copy(ctx.Writer, fileReader)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stream file"})
+		return
+	}
 }
 
 type MakeBackupRequest struct {
