@@ -116,5 +116,5 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: rostislavdugin/postgresus
-          short-description: "Free, open source and self-hosted solution for automated PostgreSQL monitoring and backups. With multiple storage options and notifications"
+          short-description: "PostgreSQL monitoring and backups solution"
           readme-filepath: ./README.md
