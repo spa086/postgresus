@@ -86,15 +86,14 @@ Notifications flow:
 
 Extra:
 
-- add brute force protection on auth (via local RPS limiter) (in progress by Rostislav Dugin)
-- create pretty website like rybbit.io with demo
 - add HTTPS for Postgresus
 - add simple SQL queries via UI
 - add support of Kubernetes Helm
+- create pretty website like rybbit.io with demo
 
 Monitoring flow:
 
-- add system metrics (CPU, RAM, disk, IO)
+- add system metrics (CPU, RAM, disk, IO) (in progress by Rostislav Dugin)
 - add queries stats (slowest, most frequent, etc. via pg_stat_statements)
 - add alerting for slow queries (listen for slow query and if they reach >100ms - send message)
 - add alerting for high resource usage (listen for high resource usage and if they reach >90% - send message)

@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 type UserController struct {
-	userService *UserService
+	userService   *UserService
+	signinLimiter *rate.Limiter
 }
 
 func (c *UserController) RegisterRoutes(router *gin.RouterGroup) {
@@ -51,8 +53,18 @@ func (c *UserController) SignUp(ctx *gin.Context) {
 // @Param request body SignInRequest true "User signin data"
 // @Success 200 {object} SignInResponse
 // @Failure 400
+// @Failure 429 {object} map[string]string "Rate limit exceeded"
 // @Router /users/signin [post]
 func (c *UserController) SignIn(ctx *gin.Context) {
+	// We use rate limiter to prevent brute force attacks
+	if !c.signinLimiter.Allow() {
+		ctx.JSON(
+			http.StatusTooManyRequests,
+			gin.H{"error": "Rate limit exceeded. Please try again later."},
+		)
+		return
+	}
+
 	var request SignInRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
