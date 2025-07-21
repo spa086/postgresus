@@ -255,10 +255,10 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 		copyResultCh <- err
 	}()
 
-	// Wait for the dump and copy to finish
-	waitErr := cmd.Wait()
+	// Wait for the copy to finish first, then the dump process
 	copyErr := <-copyResultCh
 	bytesWritten := <-bytesWrittenCh
+	waitErr := cmd.Wait()
 
 	// Check for shutdown before finalizing
 	if config.IsShouldShutdown() {
