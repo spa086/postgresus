@@ -86,8 +86,7 @@ Notifications flow:
 
 Extra:
 
-- add versioning instead of :latest (in progress by Rostislav Dugin)
-- add tests running on each PR
+- add tests running on each PR (in progress by Rostislav Dugin)
 - add prettier labels to GitHub README
 - create pretty website like rybbit.io with demo
 - add HTTPS for Postgresus

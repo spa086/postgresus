@@ -130,18 +130,34 @@ jobs:
               COMMIT_DATE=$(echo "$line" | cut -d'|||' -f4)
               SHORT_HASH=${COMMIT_HASH:0:7}
               
-              if [[ "$COMMIT_MSG" =~ ^FEATURE[[:space:]]*\(([^)]+)\):[[:space:]]*(.*) ]]; then
-                AREA="${BASH_REMATCH[1]}"
-                DESC="${BASH_REMATCH[2]}"
-                FEATURES="${FEATURES}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
-              elif [[ "$COMMIT_MSG" =~ ^FIX[[:space:]]*\(([^)]+)\):[[:space:]]*(.*) ]]; then
-                AREA="${BASH_REMATCH[1]}"
-                DESC="${BASH_REMATCH[2]}"
-                FIXES="${FIXES}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
-              elif [[ "$COMMIT_MSG" =~ ^REFACTOR[[:space:]]*\(([^)]+)\):[[:space:]]*(.*) ]]; then
-                AREA="${BASH_REMATCH[1]}"
-                DESC="${BASH_REMATCH[2]}"
-                REFACTORS="${REFACTORS}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
+              # Parse commit message format: TYPE (area): description
+              if [[ "$COMMIT_MSG" == FEATURE* ]]; then
+                # Extract area and description
+                TEMP="${COMMIT_MSG#FEATURE}"
+                TEMP="${TEMP#"${TEMP%%[![:space:]]*}"}" # trim leading spaces
+                if [[ "$TEMP" == \(* ]]; then
+                  AREA=$(echo "$TEMP" | sed 's/^(\([^)]*\)).*/\1/')
+                  DESC=$(echo "$TEMP" | sed 's/^([^)]*):[[:space:]]*//')
+                  FEATURES="${FEATURES}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
+                fi
+              elif [[ "$COMMIT_MSG" == FIX* ]]; then
+                # Extract area and description
+                TEMP="${COMMIT_MSG#FIX}"
+                TEMP="${TEMP#"${TEMP%%[![:space:]]*}"}" # trim leading spaces
+                if [[ "$TEMP" == \(* ]]; then
+                  AREA=$(echo "$TEMP" | sed 's/^(\([^)]*\)).*/\1/')
+                  DESC=$(echo "$TEMP" | sed 's/^([^)]*):[[:space:]]*//')
+                  FIXES="${FIXES}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
+                fi
+              elif [[ "$COMMIT_MSG" == REFACTOR* ]]; then
+                # Extract area and description
+                TEMP="${COMMIT_MSG#REFACTOR}"
+                TEMP="${TEMP#"${TEMP%%[![:space:]]*}"}" # trim leading spaces
+                if [[ "$TEMP" == \(* ]]; then
+                  AREA=$(echo "$TEMP" | sed 's/^(\([^)]*\)).*/\1/')
+                  DESC=$(echo "$TEMP" | sed 's/^([^)]*):[[:space:]]*//')
+                  REFACTORS="${REFACTORS}- **${AREA}**: ${DESC} ([${SHORT_HASH}](https://github.com/${{ github.repository }}/commit/${COMMIT_HASH}))\n"
+                fi
               fi
             fi
           done <<< "$COMMITS"
