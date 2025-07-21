@@ -222,10 +222,14 @@ func verifyDataIntegrity(t *testing.T, originalDB *sqlx.DB, restoredDB *sqlx.DB)
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(originalData), len(restoredData), "Should have same number of rows")
-	for i := range originalData {
-		assert.Equal(t, originalData[i].ID, restoredData[i].ID, "ID should match")
-		assert.Equal(t, originalData[i].Name, restoredData[i].Name, "Name should match")
-		assert.Equal(t, originalData[i].Value, restoredData[i].Value, "Value should match")
+
+	// Only compare data if both slices have elements (to avoid panic)
+	if len(originalData) > 0 && len(restoredData) > 0 {
+		for i := range originalData {
+			assert.Equal(t, originalData[i].ID, restoredData[i].ID, "ID should match")
+			assert.Equal(t, originalData[i].Name, restoredData[i].Name, "Name should match")
+			assert.Equal(t, originalData[i].Value, restoredData[i].Value, "Value should match")
+		}
 	}
 }
 

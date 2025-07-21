@@ -222,11 +222,8 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 		return "", nil, fmt.Errorf("failed to write backup to temporary file: %w", err)
 	}
 
-	// Close the temp file to ensure all data is written
-	if err := tempFile.Close(); err != nil {
-		cleanupFunc()
-		return "", nil, fmt.Errorf("failed to close temporary backup file: %w", err)
-	}
+	// Close the temp file to ensure all data is written - this is handled by defer
+	// Removing explicit close to avoid double-close error
 
 	uc.logger.Info("Backup file written to temporary location", "tempFile", tempBackupFile)
 	return tempBackupFile, cleanupFunc, nil

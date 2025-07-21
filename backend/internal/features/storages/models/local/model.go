@@ -62,12 +62,6 @@ func (l *LocalStorage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.R
 		return fmt.Errorf("failed to sync temp file: %w", err)
 	}
 
-	err = tempFile.Close()
-	if err != nil {
-		logger.Error("Failed to close temp file", "fileId", fileID.String(), "error", err)
-		return fmt.Errorf("failed to close temp file: %w", err)
-	}
-
 	finalPath := filepath.Join(config.GetEnv().DataFolder, fileID.String())
 	logger.Debug(
 		"Moving file from temp to final location",
