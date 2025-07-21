@@ -12,7 +12,7 @@ export function EditDiscordNotifierComponent({ notifier, setNotifier, setIsUnsav
   return (
     <>
       <div className="flex">
-        <div className="min-w-[110px] max-w-[110px] pr-3">Channel webhook URL</div>
+        <div className="max-w-[110px] min-w-[110px] pr-3">Channel webhook URL</div>
 
         <div className="w-[250px]">
           <Input

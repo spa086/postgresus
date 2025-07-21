@@ -80,7 +80,7 @@ export const EditDatabaseBaseInfoComponent = ({
             Cancel
           </Button>
         )}
-        
+
         <Button
           type="primary"
           className={`${isShowCancelButton ? 'ml-1' : 'ml-auto'} mr-5`}

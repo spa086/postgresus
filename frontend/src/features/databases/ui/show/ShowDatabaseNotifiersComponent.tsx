@@ -16,7 +16,10 @@ export const ShowDatabaseNotifiersComponent = ({ database }: Props) => {
             database.notifiers.map((notifier) => (
               <div className="flex items-center" key={notifier.id}>
                 <div>- {notifier.name}</div>
-                <img src={getNotifierLogoFromType(notifier?.notifierType)} className="ml-1 h-4 w-4" />
+                <img
+                  src={getNotifierLogoFromType(notifier?.notifierType)}
+                  className="ml-1 h-4 w-4"
+                />
               </div>
             ))
           ) : (
