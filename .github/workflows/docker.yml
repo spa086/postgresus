@@ -112,9 +112,10 @@ jobs:
 
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
+        continue-on-error: true
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: rostislavdugin/postgresus
-          short-description: "PostgreSQL monitoring and backups solution"
+          short-description: "Free PostgreSQL monitoring & backup solution"
           readme-filepath: ./README.md
