@@ -303,7 +303,7 @@ func Test_CheckPgHealthUseCase(t *testing.T) {
 			t,
 			"SendNotification",
 			mock.Anything,
-			fmt.Sprintf("✅ [%s] DB is back online", database.Name),
+			fmt.Sprintf("✅ [%s] DB is online", database.Name),
 			fmt.Sprintf("✅ [%s] DB is back online", database.Name),
 		)
 	})
