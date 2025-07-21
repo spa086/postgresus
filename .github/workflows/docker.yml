@@ -32,6 +32,14 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.60.3
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
+      - name: Install swag for swagger generation
+        run: go install github.com/swaggo/swag/cmd/swag@1.16.4
+
+      - name: Generate swagger docs
+        run: |
+          cd backend
+          swag init -d . -g cmd/main.go -o swagger
+
       - name: Run golangci-lint
         run: |
           cd backend
