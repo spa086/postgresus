@@ -68,29 +68,6 @@ services:
       - "4005:4005"
     volumes:
       - ./postgresus-data:/postgresus-data
-    depends_on:
-      postgresus-db:
-        condition: service_healthy
-    restart: unless-stopped
-
-  postgresus-db:
-    container_name: postgresus-db
-    image: postgres:17
-    # we use default values, but do not expose
-    # PostgreSQL ports so it is safe
-    environment:
-      - POSTGRES_DB=postgresus
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Q1234567
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
-    command: -p 5437
-    shm_size: 10gb
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgresus -p 5437"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     restart: unless-stopped
 EOF
 log "docker-compose.yml created successfully"

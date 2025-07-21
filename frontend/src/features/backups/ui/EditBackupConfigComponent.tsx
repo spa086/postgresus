@@ -341,7 +341,7 @@ export const EditBackupConfigComponent = ({
 
             <Tooltip
               className="cursor-pointer"
-              title="Number of CPU cores to use for backup processing. Higher values may speed up backups but use more resources."
+              title="Number of CPU cores to use for restore processing. Higher values may speed up restores, but use more resources."
             >
               <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
             </Tooltip>
