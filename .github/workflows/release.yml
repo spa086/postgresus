@@ -9,6 +9,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, '[skip-release]') }}
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Check out code
@@ -196,15 +199,6 @@ jobs:
             echo -e "$CHANGELOG"
             echo EOF
           } >> $GITHUB_OUTPUT
-
-      - name: Create Git tag
-        if: steps.version_bump.outputs.should_release == 'true'
-        run: |
-          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
-          git push origin "v${NEW_VERSION}"
 
       - name: Create GitHub Release
         if: steps.version_bump.outputs.should_release == 'true'
