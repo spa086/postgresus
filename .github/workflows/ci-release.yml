@@ -3,6 +3,8 @@ name: CI and Release
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -159,7 +161,7 @@ jobs:
         run: |
           cd backend
           go install github.com/pressly/goose/v3/cmd/goose@latest
-          goose -dir migrations postgres "postgres://postgres:Q1234567@localhost:5437/postgresus?sslmode=disable" up
+          goose up
 
       - name: Run Go tests
         run: |
@@ -175,7 +177,7 @@ jobs:
   determine-version:
     runs-on: ubuntu-latest
     needs: [test-backend, lint-frontend]
-    if: ${{ !contains(github.event.head_commit.message, '[skip-release]') }}
+    if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip-release]') }}
     outputs:
       should_release: ${{ steps.version_bump.outputs.should_release }}
       new_version: ${{ steps.version_bump.outputs.new_version }}
@@ -268,7 +270,7 @@ jobs:
   build-only:
     runs-on: ubuntu-latest
     needs: [test-backend, lint-frontend]
-    if: ${{ contains(github.event.head_commit.message, '[skip-release]') }}
+    if: ${{ github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[skip-release]') }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
