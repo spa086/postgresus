@@ -31,6 +31,7 @@ import (
 	_ "postgresus-backend/swagger" // swagger docs
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -60,6 +61,15 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	ginApp := gin.Default()
+
+	// Add GZIP compression middleware
+	ginApp.Use(gzip.Gzip(
+		gzip.DefaultCompression,
+		// Don't compress already compressed files
+		gzip.WithExcludedExtensions(
+			[]string{".png", ".gif", ".jpeg", ".jpg", ".ico", ".svg", ".pdf", ".mp4"},
+		),
+	))
 
 	enableCors(ginApp)
 	setUpRoutes(ginApp)
