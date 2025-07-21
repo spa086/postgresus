@@ -33,7 +33,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Install swag for swagger generation
-        run: go install github.com/swaggo/swag/cmd/swag@1.16.4
+        run: go install github.com/swaggo/swag/cmd/swag@v1.16.4
 
       - name: Generate swagger docs
         run: |
