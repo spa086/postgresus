@@ -59,21 +59,27 @@ for version in $versions; do
     version_dir="$POSTGRES_DIR/postgresql-$version"
     mkdir -p "$version_dir/bin"
     
-    # Create symlinks to the version-specific installed binaries
-    # PostgreSQL packages create versioned binaries like pg_dump-13, pg_dump-14, etc.
-    if [ -f "/usr/bin/pg_dump-$version" ]; then
-        ln -sf "/usr/bin/pg_dump-$version" "$version_dir/bin/pg_dump"
-        ln -sf "/usr/bin/pg_dumpall-$version" "$version_dir/bin/pg_dumpall"
-        ln -sf "/usr/bin/psql-$version" "$version_dir/bin/psql"
-        ln -sf "/usr/bin/pg_restore-$version" "$version_dir/bin/pg_restore"
-        ln -sf "/usr/bin/createdb-$version" "$version_dir/bin/createdb"
-        ln -sf "/usr/bin/dropdb-$version" "$version_dir/bin/dropdb"
+    # On Debian/Ubuntu, PostgreSQL binaries are located in /usr/lib/postgresql/{version}/bin/
+    pg_bin_dir="/usr/lib/postgresql/$version/bin"
+    
+    if [ -d "$pg_bin_dir" ] && [ -f "$pg_bin_dir/pg_dump" ]; then
+        # Create symlinks to the version-specific binaries
+        ln -sf "$pg_bin_dir/pg_dump" "$version_dir/bin/pg_dump"
+        ln -sf "$pg_bin_dir/pg_dumpall" "$version_dir/bin/pg_dumpall"
+        ln -sf "$pg_bin_dir/psql" "$version_dir/bin/psql"
+        ln -sf "$pg_bin_dir/pg_restore" "$version_dir/bin/pg_restore"
+        ln -sf "$pg_bin_dir/createdb" "$version_dir/bin/createdb"
+        ln -sf "$pg_bin_dir/dropdb" "$version_dir/bin/dropdb"
         
         echo "PostgreSQL $version client tools installed successfully"
     else
-        echo "Error: PostgreSQL $version versioned binaries not found. Expected /usr/bin/pg_dump-$version"
-        echo "Available pg_dump binaries:"
-        ls -la /usr/bin/pg_dump* 2>/dev/null || echo "No pg_dump binaries found"
+        echo "Error: PostgreSQL $version binaries not found in expected location: $pg_bin_dir"
+        echo "Available PostgreSQL directories:"
+        ls -la /usr/lib/postgresql/ 2>/dev/null || echo "No PostgreSQL directories found in /usr/lib/postgresql/"
+        if [ -d "$pg_bin_dir" ]; then
+            echo "Contents of $pg_bin_dir:"
+            ls -la "$pg_bin_dir" 2>/dev/null || echo "Directory exists but cannot list contents"
+        fi
         exit 1
     fi
     echo
@@ -90,7 +96,7 @@ for version in $versions; do
     if [ -f "$version_dir/bin/pg_dump" ]; then
         echo "  postgresql-$version: $version_dir/bin/"
         # Verify the correct version
-        version_output=$("$version_dir/bin/pg_dump" --version 2>/dev/null | grep -o "pg_dump (PostgreSQL) [0-9]\+")
+        version_output=$("$version_dir/bin/pg_dump" --version 2>/dev/null | grep -o "pg_dump (PostgreSQL) [0-9]\+\.[0-9]\+")
         echo "    Version check: $version_output"
     fi
 done

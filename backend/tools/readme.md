@@ -1,4 +1,4 @@
-This directory is needed only for development.
+This directory is needed only for development and CI\CD.
 
 We have to download and install all the PostgreSQL versions from 13 to 17 locally.
 This is needed so we can call pg_dump, pg_dumpall, etc. on each version of the PostgreSQL database.
