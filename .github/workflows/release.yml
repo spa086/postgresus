@@ -109,9 +109,9 @@ jobs:
 
           # Get commits since last tag
           if [ "$LATEST_TAG" = "v0.0.0" ]; then
-            COMMITS=$(git log --pretty=format:"%s|||%H|||%an|||%ad" --date=short --no-merges)
+            COMMITS=$(git log --pretty=format:"%s|%H|%an|%ad" --date=short --no-merges)
           else
-            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"%s|||%H|||%an|||%ad" --date=short --no-merges)
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"%s|%H|%an|%ad" --date=short --no-merges)
           fi
 
           # Create changelog
@@ -124,10 +124,10 @@ jobs:
 
           while IFS= read -r line; do
             if [ -n "$line" ]; then
-              COMMIT_MSG=$(echo "$line" | cut -d'|||' -f1)
-              COMMIT_HASH=$(echo "$line" | cut -d'|||' -f2)
-              COMMIT_AUTHOR=$(echo "$line" | cut -d'|||' -f3)
-              COMMIT_DATE=$(echo "$line" | cut -d'|||' -f4)
+              COMMIT_MSG=$(echo "$line" | cut -d'|' -f1)
+              COMMIT_HASH=$(echo "$line" | cut -d'|' -f2)
+              COMMIT_AUTHOR=$(echo "$line" | cut -d'|' -f3)
+              COMMIT_DATE=$(echo "$line" | cut -d'|' -f4)
               SHORT_HASH=${COMMIT_HASH:0:7}
               
               # Parse commit message format: TYPE (area): description
