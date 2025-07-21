@@ -41,6 +41,27 @@ Before any commit, make sure:
 3. All tests are passing
 4. Project is building successfully
 
+### Automated Versioning
+
+This project uses automated versioning based on commit messages:
+
+- **FEATURE (area)**: Creates a **minor** version bump (e.g., 1.0.0 → 1.1.0)
+- **FIX (area)**: Creates a **patch** version bump (e.g., 1.0.0 → 1.0.1)
+- **REFACTOR (area)**: Creates a **patch** version bump (e.g., 1.0.0 → 1.0.1)
+- **BREAKING CHANGE**: Creates a **major** version bump (e.g., 1.0.0 → 2.0.0)
+
+The system automatically:
+
+- Analyzes commits since the last release
+- Determines the appropriate version bump
+- Generates a changelog grouped by area (frontend/backend/etc.)
+- Creates GitHub releases with detailed release notes
+- Updates package.json version numbers
+
+To skip automated release (for documentation updates, etc.), add `[skip-release]` to your commit message.
+
+### Docs
+
 If you need to add some explanation, do it in appropriate place in the code. Or in the /docs folder if it is something general. For charts, use Mermaid.
 
 ### Priorities
