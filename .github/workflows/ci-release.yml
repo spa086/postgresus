@@ -157,6 +157,12 @@ jobs:
           # Wait for MinIO
           timeout 60 bash -c 'until nc -z localhost 9000; do sleep 2; done'
 
+      - name: Install PostgreSQL client tools
+        run: |
+          chmod +x backend/tools/download_linux.sh
+          cd backend/tools
+          ./download_linux.sh
+
       - name: Run database migrations
         run: |
           cd backend

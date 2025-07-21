@@ -2,6 +2,9 @@
 
 set -e  # Exit on any error
 
+# Ensure non-interactive mode for apt
+export DEBIAN_FRONTEND=noninteractive
+
 echo "Installing PostgreSQL client tools versions 13-17 for Linux (Debian/Ubuntu)..."
 echo
 
@@ -30,18 +33,18 @@ echo
 
 # Add PostgreSQL official APT repository
 echo "Adding PostgreSQL official APT repository..."
-$SUDO apt-get update -qq
-$SUDO apt-get install -y wget ca-certificates
+$SUDO apt-get update -qq -y
+$SUDO apt-get install -y -qq wget ca-certificates
 
 # Add GPG key
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | $SUDO apt-key add -
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | $SUDO apt-key add - 2>/dev/null
 
 # Add repository
-echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | $SUDO tee /etc/apt/sources.list.d/pgdg.list
+echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | $SUDO tee /etc/apt/sources.list.d/pgdg.list >/dev/null
 
 # Update package list
 echo "Updating package list..."
-$SUDO apt-get update -qq
+$SUDO apt-get update -qq -y
 
 # Install client tools for each version
 versions="13 14 15 16 17"
@@ -50,7 +53,7 @@ for version in $versions; do
     echo "Installing PostgreSQL $version client tools..."
     
     # Install client tools only
-    $SUDO apt-get install -y postgresql-client-$version
+    $SUDO apt-get install -y -qq postgresql-client-$version
     
     # Create version-specific directory and symlinks
     version_dir="$POSTGRES_DIR/postgresql-$version"
