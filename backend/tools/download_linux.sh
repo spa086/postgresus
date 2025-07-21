@@ -59,29 +59,22 @@ for version in $versions; do
     version_dir="$POSTGRES_DIR/postgresql-$version"
     mkdir -p "$version_dir/bin"
     
-    # Create symlinks to the installed binaries
-    if [ -f "/usr/bin/pg_dump" ]; then
-        # If multiple versions, binaries are usually named with version suffix
-        if [ -f "/usr/bin/pg_dump-$version" ]; then
-            ln -sf "/usr/bin/pg_dump-$version" "$version_dir/bin/pg_dump"
-            ln -sf "/usr/bin/pg_dumpall-$version" "$version_dir/bin/pg_dumpall"
-            ln -sf "/usr/bin/psql-$version" "$version_dir/bin/psql"
-            ln -sf "/usr/bin/pg_restore-$version" "$version_dir/bin/pg_restore"
-            ln -sf "/usr/bin/createdb-$version" "$version_dir/bin/createdb"
-            ln -sf "/usr/bin/dropdb-$version" "$version_dir/bin/dropdb"
-        else
-            # Fallback to non-versioned names (latest version)
-            ln -sf "/usr/bin/pg_dump" "$version_dir/bin/pg_dump"
-            ln -sf "/usr/bin/pg_dumpall" "$version_dir/bin/pg_dumpall"
-            ln -sf "/usr/bin/psql" "$version_dir/bin/psql"
-            ln -sf "/usr/bin/pg_restore" "$version_dir/bin/pg_restore"
-            ln -sf "/usr/bin/createdb" "$version_dir/bin/createdb"
-            ln -sf "/usr/bin/dropdb" "$version_dir/bin/dropdb"
-        fi
+    # Create symlinks to the version-specific installed binaries
+    # PostgreSQL packages create versioned binaries like pg_dump-13, pg_dump-14, etc.
+    if [ -f "/usr/bin/pg_dump-$version" ]; then
+        ln -sf "/usr/bin/pg_dump-$version" "$version_dir/bin/pg_dump"
+        ln -sf "/usr/bin/pg_dumpall-$version" "$version_dir/bin/pg_dumpall"
+        ln -sf "/usr/bin/psql-$version" "$version_dir/bin/psql"
+        ln -sf "/usr/bin/pg_restore-$version" "$version_dir/bin/pg_restore"
+        ln -sf "/usr/bin/createdb-$version" "$version_dir/bin/createdb"
+        ln -sf "/usr/bin/dropdb-$version" "$version_dir/bin/dropdb"
         
         echo "PostgreSQL $version client tools installed successfully"
     else
-        echo "Warning: PostgreSQL $version client tools may not have installed correctly"
+        echo "Error: PostgreSQL $version versioned binaries not found. Expected /usr/bin/pg_dump-$version"
+        echo "Available pg_dump binaries:"
+        ls -la /usr/bin/pg_dump* 2>/dev/null || echo "No pg_dump binaries found"
+        exit 1
     fi
     echo
 done
@@ -96,6 +89,9 @@ for version in $versions; do
     version_dir="$POSTGRES_DIR/postgresql-$version"
     if [ -f "$version_dir/bin/pg_dump" ]; then
         echo "  postgresql-$version: $version_dir/bin/"
+        # Verify the correct version
+        version_output=$("$version_dir/bin/pg_dump" --version 2>/dev/null | grep -o "pg_dump (PostgreSQL) [0-9]\+")
+        echo "    Version check: $version_output"
     fi
 done
 
