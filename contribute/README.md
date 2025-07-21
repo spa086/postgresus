@@ -86,12 +86,10 @@ Notifications flow:
 
 Extra:
 
-- add tests running on each PR (in progress by Rostislav Dugin)
-- add prettier labels to GitHub README
+- add brute force protection on auth (via local RPS limiter) (in progress by Rostislav Dugin)
 - create pretty website like rybbit.io with demo
 - add HTTPS for Postgresus
 - add simple SQL queries via UI
-- add brute force protection on auth (via local RPS limiter)
 - add support of Kubernetes Helm
 
 Monitoring flow:
