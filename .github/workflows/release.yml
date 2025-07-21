@@ -181,12 +181,34 @@ jobs:
                     # Save changelog to file
           echo -e "$CHANGELOG" > RELEASE_CHANGELOG.md
 
-          # Update main CHANGELOG.md
+          # Update main CHANGELOG.md - preserve all version history
           if [ -f "CHANGELOG.md" ]; then
-            # Create new changelog content
-            echo -e "$CHANGELOG" > NEW_CHANGELOG.md
-            # Get existing changelog content after the [Unreleased] section
-            sed -n '/## \[Unreleased\]/,$p' CHANGELOG.md | tail -n +3 >> NEW_CHANGELOG.md
+            # Get the header until [Unreleased] section
+            sed -n '1,/## \[Unreleased\]/p' CHANGELOG.md > NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            # Add the new release (without the "# Changelog" header)
+            echo "## [${NEW_VERSION}] - $(date +%Y-%m-%d)" >> NEW_CHANGELOG.md
+            echo "" >> NEW_CHANGELOG.md
+            
+            # Add the new release sections
+            if [ -n "$FEATURES" ]; then
+              echo "### ✨ Features" >> NEW_CHANGELOG.md
+              echo -e "$FEATURES" >> NEW_CHANGELOG.md
+            fi
+            
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes" >> NEW_CHANGELOG.md
+              echo -e "$FIXES" >> NEW_CHANGELOG.md
+            fi
+            
+            if [ -n "$REFACTORS" ]; then
+              echo "### 🔨 Refactoring" >> NEW_CHANGELOG.md
+              echo -e "$REFACTORS" >> NEW_CHANGELOG.md
+            fi
+            
+            # Get existing releases (everything after first ## [version] pattern)
+            sed -n '/## \[[0-9]/,$p' CHANGELOG.md >> NEW_CHANGELOG.md
+            
             # Replace the original file
             mv NEW_CHANGELOG.md CHANGELOG.md
           else
@@ -211,16 +233,3 @@ jobs:
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
-
-      - name: Update version files and changelog
-        if: steps.version_bump.outputs.should_release == 'true'
-        run: |
-          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
-          cd frontend
-          npm version $NEW_VERSION --no-git-tag-version
-          cd ..
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add frontend/package.json frontend/package-lock.json CHANGELOG.md
-          git commit -m "chore: bump version to ${NEW_VERSION} [skip-release]" || true
-          git push origin main || true
