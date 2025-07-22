@@ -190,7 +190,7 @@ export const EditHealthcheckConfigComponent = ({ databaseId, onClose }: Props) =
 
             <Tooltip
               className="cursor-pointer"
-              title="How many days to store healthcheck attempt history"
+              title="How many days to store health check attempt history"
             >
               <InfoCircleOutlined className="ml-2" style={{ color: 'gray' }} />
             </Tooltip>

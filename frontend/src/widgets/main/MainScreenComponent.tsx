@@ -60,7 +60,7 @@ export const MainScreenComponent = () => {
             target="_blank"
             rel="noreferrer"
           >
-            Healthcheck
+            Health-check
           </a>
 
           <a

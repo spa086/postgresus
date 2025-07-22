@@ -40,7 +40,7 @@ export const ShowHealthcheckConfigComponent = ({ databaseId }: Props) => {
   return (
     <div className="space-y-4">
       <div className="mb-1 flex items-center">
-        <div className="min-w-[180px]">Is healthcheck enabled</div>
+        <div className="min-w-[180px]">Is health check enabled</div>
         <div className="w-[250px]">{healthcheckConfig.isHealthcheckEnabled ? 'Yes' : 'No'}</div>
       </div>
 

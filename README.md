@@ -20,8 +20,14 @@
     <a href="#-license">License</a> •
     <a href="#-contributing">Contributing</a>
   </p>
+
+  <p style="margin-top: 20px; margin-bottom: 20px; font-size: 1.2em;">
+    <a href="https://postgresus.com" target="_blank"><strong>🌐 Postgresus website</strong></a>
+  </p>
   
   <img src="assets/dashboard.svg" alt="Postgresus Dashboard" width="800"/>
+  
+ 
 </div>
 
 ---
