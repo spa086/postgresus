@@ -70,6 +70,7 @@ Before taking anything more than a couple of lines of code, please write Rostisl
 
 Backups flow:
 
+- do not remove old backups on backups disable
 - add FTP
 - add Dropbox
 - add OneDrive
