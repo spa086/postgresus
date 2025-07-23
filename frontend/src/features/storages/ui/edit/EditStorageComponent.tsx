@@ -9,8 +9,8 @@ import {
 } from '../../../../entity/storages';
 import { ToastHelper } from '../../../../shared/toast';
 import { EditGoogleDriveStorageComponent } from './storages/EditGoogleDriveStorageComponent';
-import { EditS3StorageComponent } from './storages/EditS3StorageComponent';
 import { EditNASStorageComponent } from './storages/EditNASStorageComponent';
+import { EditS3StorageComponent } from './storages/EditS3StorageComponent';
 
 interface Props {
   isShowClose: boolean;
