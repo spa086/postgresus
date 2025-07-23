@@ -43,12 +43,12 @@
 ### 🗄️ **Multiple Storage Destinations**
 
 - **Local storage**: Keep backups on your VPS/server
-- **Cloud storage**: S3, Cloudflare R2, Google Drive, Dropbox, and more (coming soon)
+- **Cloud storage**: S3, Cloudflare R2, Google Drive, NAS, Dropbox and more
 - **Secure**: All data stays under your control
 
 ### 📱 **Smart Notifications**
 
-- **Multiple channels**: Email, Telegram, Slack, webhooks (coming soon)
+- **Multiple channels**: Email, Telegram, Slack, Discord, webhooks
 - **Real-time updates**: Success and failure notifications
 - **Team integration**: Perfect for DevOps workflows
 
