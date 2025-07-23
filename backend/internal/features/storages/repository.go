@@ -26,17 +26,21 @@ func (r *StorageRepository) Save(storage *Storage) (*Storage, error) {
 			if storage.GoogleDriveStorage != nil {
 				storage.GoogleDriveStorage.StorageID = storage.ID
 			}
+		case StorageTypeNAS:
+			if storage.NASStorage != nil {
+				storage.NASStorage.StorageID = storage.ID
+			}
 		}
 
 		if storage.ID == uuid.Nil {
 			if err := tx.Create(storage).
-				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage").
+				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage", "NASStorage").
 				Error; err != nil {
 				return err
 			}
 		} else {
 			if err := tx.Save(storage).
-				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage").
+				Omit("LocalStorage", "S3Storage", "GoogleDriveStorage", "NASStorage").
 				Error; err != nil {
 				return err
 			}
@@ -64,6 +68,13 @@ func (r *StorageRepository) Save(storage *Storage) (*Storage, error) {
 					return err
 				}
 			}
+		case StorageTypeNAS:
+			if storage.NASStorage != nil {
+				storage.NASStorage.StorageID = storage.ID // Ensure ID is set
+				if err := tx.Save(storage.NASStorage).Error; err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
@@ -84,6 +95,7 @@ func (r *StorageRepository) FindByID(id uuid.UUID) (*Storage, error) {
 		Preload("LocalStorage").
 		Preload("S3Storage").
 		Preload("GoogleDriveStorage").
+		Preload("NASStorage").
 		Where("id = ?", id).
 		First(&s).Error; err != nil {
 		return nil, err
@@ -100,6 +112,7 @@ func (r *StorageRepository) FindByUserID(userID uuid.UUID) ([]*Storage, error) {
 		Preload("LocalStorage").
 		Preload("S3Storage").
 		Preload("GoogleDriveStorage").
+		Preload("NASStorage").
 		Where("user_id = ?", userID).
 		Order("name ASC").
 		Find(&storages).Error; err != nil {
@@ -128,6 +141,12 @@ func (r *StorageRepository) Delete(s *Storage) error {
 		case StorageTypeGoogleDrive:
 			if s.GoogleDriveStorage != nil {
 				if err := tx.Delete(s.GoogleDriveStorage).Error; err != nil {
+					return err
+				}
+			}
+		case StorageTypeNAS:
+			if s.NASStorage != nil {
+				if err := tx.Delete(s.NASStorage).Error; err != nil {
 					return err
 				}
 			}

@@ -2,6 +2,7 @@ import { type Storage, StorageType } from '../../../../entity/storages';
 import { getStorageLogoFromType } from '../../../../entity/storages/models/getStorageLogoFromType';
 import { getStorageNameFromType } from '../../../../entity/storages/models/getStorageNameFromType';
 import { ShowGoogleDriveStorageComponent } from './storages/ShowGoogleDriveStorageComponent';
+import { ShowNASStorageComponent } from './storages/ShowNASStorageComponent';
 import { ShowS3StorageComponent } from './storages/ShowS3StorageComponent';
 
 interface Props {
@@ -31,6 +32,10 @@ export function ShowStorageComponent({ storage }: Props) {
         {storage?.type === StorageType.GOOGLE_DRIVE && (
           <ShowGoogleDriveStorageComponent storage={storage} />
         )}
+      </div>
+
+      <div>
+        {storage?.type === StorageType.NAS && <ShowNASStorageComponent storage={storage} />}
       </div>
     </div>
   );

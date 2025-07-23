@@ -10,6 +10,7 @@ import {
 import { ToastHelper } from '../../../../shared/toast';
 import { EditGoogleDriveStorageComponent } from './storages/EditGoogleDriveStorageComponent';
 import { EditS3StorageComponent } from './storages/EditS3StorageComponent';
+import { EditNASStorageComponent } from './storages/EditNASStorageComponent';
 
 interface Props {
   isShowClose: boolean;
@@ -98,6 +99,19 @@ export function EditStorageComponent({
       };
     }
 
+    if (type === StorageType.NAS) {
+      storage.nasStorage = {
+        host: '',
+        port: 0,
+        share: '',
+        username: '',
+        password: '',
+        useSsl: false,
+        domain: '',
+        path: '',
+      };
+    }
+
     setStorage(
       JSON.parse(
         JSON.stringify({
@@ -148,6 +162,16 @@ export function EditStorageComponent({
       );
     }
 
+    if (storage.type === StorageType.NAS) {
+      return (
+        storage.nasStorage?.host &&
+        storage.nasStorage?.port &&
+        storage.nasStorage?.share &&
+        storage.nasStorage?.username &&
+        storage.nasStorage?.password
+      );
+    }
+
     return false;
   };
 
@@ -181,6 +205,7 @@ export function EditStorageComponent({
             { label: 'Local storage', value: StorageType.LOCAL },
             { label: 'S3', value: StorageType.S3 },
             { label: 'Google Drive', value: StorageType.GOOGLE_DRIVE },
+            { label: 'NAS', value: StorageType.NAS },
           ]}
           onChange={(value) => {
             setStorageType(value);
@@ -206,6 +231,14 @@ export function EditStorageComponent({
 
         {storage?.type === StorageType.GOOGLE_DRIVE && (
           <EditGoogleDriveStorageComponent
+            storage={storage}
+            setStorage={setStorage}
+            setIsUnsaved={setIsUnsaved}
+          />
+        )}
+
+        {storage?.type === StorageType.NAS && (
+          <EditNASStorageComponent
             storage={storage}
             setStorage={setStorage}
             setIsUnsaved={setIsUnsaved}

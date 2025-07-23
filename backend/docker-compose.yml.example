@@ -86,3 +86,19 @@ services:
       - POSTGRES_PASSWORD=testpassword
     container_name: test-postgres-17
     shm_size: 1gb
+
+  # Test NAS server (Samba)
+  test-nas:
+    image: dperson/samba:latest
+    ports:
+      - "${TEST_NAS_PORT:-445}:445"
+    environment:
+      - USERID=1000
+      - GROUPID=1000
+    volumes:
+      - ./temp/nas:/shared
+    command: >
+      -u "testuser;testpassword"
+      -s "backups;/shared;yes;no;no;testuser"
+      -p
+    container_name: test-nas

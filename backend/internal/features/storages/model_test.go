@@ -10,8 +10,10 @@ import (
 	"postgresus-backend/internal/config"
 	google_drive_storage "postgresus-backend/internal/features/storages/models/google_drive"
 	local_storage "postgresus-backend/internal/features/storages/models/local"
+	nas_storage "postgresus-backend/internal/features/storages/models/nas"
 	s3_storage "postgresus-backend/internal/features/storages/models/s3"
 	"postgresus-backend/internal/util/logger"
+	"strconv"
 	"testing"
 	"time"
 
@@ -44,6 +46,14 @@ func Test_Storage_BasicOperations(t *testing.T) {
 	require.NoError(t, err, "Failed to setup test file")
 	defer os.Remove(testFilePath)
 
+	// Setup NAS port
+	nasPort := 445
+	if portStr := config.GetEnv().TestNASPort; portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil {
+			nasPort = port
+		}
+	}
+
 	// Run tests
 	testCases := []struct {
 		name    string
@@ -71,6 +81,20 @@ func Test_Storage_BasicOperations(t *testing.T) {
 				ClientID:     config.GetEnv().TestGoogleDriveClientID,
 				ClientSecret: config.GetEnv().TestGoogleDriveClientSecret,
 				TokenJSON:    config.GetEnv().TestGoogleDriveTokenJSON,
+			},
+		},
+		{
+			name: "NASStorage",
+			storage: &nas_storage.NASStorage{
+				StorageID: uuid.New(),
+				Host:      "localhost",
+				Port:      nasPort,
+				Share:     "backups",
+				Username:  "testuser",
+				Password:  "testpassword",
+				UseSSL:    false,
+				Domain:    "",
+				Path:      "test-files",
 			},
 		},
 	}
@@ -201,4 +225,5 @@ func validateEnvVariables(t *testing.T) {
 	assert.NotEmpty(t, env.TestGoogleDriveClientSecret, "TEST_GOOGLE_DRIVE_CLIENT_SECRET is empty")
 	assert.NotEmpty(t, env.TestGoogleDriveTokenJSON, "TEST_GOOGLE_DRIVE_TOKEN_JSON is empty")
 	assert.NotEmpty(t, env.TestMinioPort, "TEST_MINIO_PORT is empty")
+	assert.NotEmpty(t, env.TestNASPort, "TEST_NAS_PORT is empty")
 }

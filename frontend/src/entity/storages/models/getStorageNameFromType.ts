@@ -8,6 +8,8 @@ export const getStorageNameFromType = (type: StorageType) => {
       return 'S3';
     case StorageType.GOOGLE_DRIVE:
       return 'Google Drive';
+    case StorageType.NAS:
+      return 'NAS';
     default:
       return '';
   }
