@@ -194,18 +194,24 @@ export function EditNASStorageComponent({ storage, setStorage, setIsUnsaved }: P
           onChange={(e) => {
             if (!storage?.nasStorage) return;
 
+            let pathValue = e.target.value.trim();
+            // Remove leading slash if present
+            if (pathValue.startsWith('/')) {
+              pathValue = pathValue.substring(1);
+            }
+
             setStorage({
               ...storage,
               nasStorage: {
                 ...storage.nasStorage,
-                path: e.target.value.trim() || undefined,
+                path: pathValue || undefined,
               },
             });
             setIsUnsaved(true);
           }}
           size="small"
           className="w-full max-w-[250px]"
-          placeholder="/backups (optional)"
+          placeholder="backups (optional, no leading slash)"
         />
 
         <Tooltip className="cursor-pointer" title="Subdirectory path within the share (optional)">
