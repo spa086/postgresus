@@ -12,3 +12,4 @@ swagger/swagger.yaml
 postgresus-backend.exe
 ui/build/*
 pgdata-for-restore/
+temp/

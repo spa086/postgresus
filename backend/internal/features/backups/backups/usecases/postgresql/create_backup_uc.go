@@ -100,7 +100,9 @@ func (uc *CreatePostgresqlBackupUsecase) streamToStorage(
 ) error {
 	uc.logger.Info("Streaming PostgreSQL backup to storage", "pgBin", pgBin, "args", args)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
+	// if backup not fit into 23 hours, Postgresus
+	// seems not to work for such database size
+	ctx, cancel := context.WithTimeout(context.Background(), 23*time.Hour)
 	defer cancel()
 
 	// Monitor for shutdown and cancel context if needed
