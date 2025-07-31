@@ -242,7 +242,7 @@ func (s *BackupService) MakeBackup(databaseID uuid.UUID, isLastTry bool) {
 		)
 	}
 
-	if !isLastTry {
+	if backup.Status != BackupStatusCompleted && !isLastTry {
 		return
 	}
 
