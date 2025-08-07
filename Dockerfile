@@ -68,7 +68,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create postgres user and set up directories
 RUN useradd -m -s /bin/bash postgres || true && \
     mkdir -p /postgresus-data/pgdata && \
-    chown -R postgres:postgres /postgresus-data/pgdata
+    mkdir -p /postgresus-data/temp && \
+    chown -R postgres:postgres /postgresus-data/pgdata && \
+    chown -R postgres:postgres /postgresus-data/temp
+    
 
 WORKDIR /app
 
