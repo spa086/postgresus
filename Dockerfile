@@ -68,17 +68,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create postgres user and set up directories
 RUN useradd -m -s /bin/bash postgres || true && \
     mkdir -p /postgresus-data/pgdata && \
-    mkdir -p /postgresus-data/temp && \
-    chown -R postgres:postgres /postgresus-data/pgdata && \
-    chown -R postgres:postgres /postgresus-data/temp
-    
+    chown -R postgres:postgres /postgresus-data/pgdata
 
 WORKDIR /app
 
 # Copy Goose from build stage
 COPY --from=backend-build /usr/local/bin/goose /usr/local/bin/goose
 
-# Copy app binary 
+# Copy app binary
 COPY --from=backend-build /app/main .
 
 # Copy migrations directory
@@ -112,7 +109,7 @@ chown -R postgres:postgres /postgresus-data
 if [ ! -s "/postgresus-data/pgdata/PG_VERSION" ]; then
     echo "Initializing PostgreSQL database..."
     gosu postgres \$PG_BIN/initdb -D /postgresus-data/pgdata --encoding=UTF8 --locale=C.UTF-8
-    
+
     # Configure PostgreSQL
     echo "host all all 127.0.0.1/32 md5" >> /postgresus-data/pgdata/pg_hba.conf
     echo "local all all trust" >> /postgresus-data/pgdata/pg_hba.conf

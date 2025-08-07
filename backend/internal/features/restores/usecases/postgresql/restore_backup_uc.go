@@ -172,6 +172,9 @@ func (uc *RestorePostgresqlBackupUsecase) downloadBackupToTempFile(
 	backup *backups.Backup,
 	storage *storages.Storage,
 ) (string, func(), error) {
+	if err := storages.EnsureSystemDirectories(); err != nil {
+		return "", nil, fmt.Errorf("failed to ensure system directories: %w", err)
+	}
 	// Create temporary directory for backup data
 	tempDir, err := os.MkdirTemp(config.GetEnv().TempFolder, "restore_"+uuid.New().String())
 	if err != nil {

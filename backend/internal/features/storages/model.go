@@ -2,6 +2,7 @@ package storages
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	google_drive_storage "postgresus-backend/internal/features/storages/models/google_drive"
@@ -27,6 +28,11 @@ type Storage struct {
 }
 
 func (s *Storage) SaveFile(logger *slog.Logger, fileID uuid.UUID, file io.Reader) error {
+	// Ensure system directories exist before any storage operations
+	if err := EnsureSystemDirectories(); err != nil {
+		return fmt.Errorf("failed to ensure system directories: %w", err)
+	}
+
 	err := s.getSpecificStorage().SaveFile(logger, fileID, file)
 	if err != nil {
 		lastSaveError := err.Error()
@@ -56,10 +62,20 @@ func (s *Storage) Validate() error {
 		return errors.New("storage name is required")
 	}
 
+	// Ensure system directories exist before validation
+	if err := EnsureSystemDirectories(); err != nil {
+		return fmt.Errorf("failed to ensure system directories: %w", err)
+	}
+
 	return s.getSpecificStorage().Validate()
 }
 
 func (s *Storage) TestConnection() error {
+	// Ensure system directories exist before testing connection
+	if err := EnsureSystemDirectories(); err != nil {
+		return fmt.Errorf("failed to ensure system directories: %w", err)
+	}
+
 	return s.getSpecificStorage().TestConnection()
 }
 
